@@ -1,0 +1,60 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Nos casamos. Toda la informacion de la boda.' } = Astro.props;
+
+// BASE_URL vale "/boda_manuel_y_lucia" en produccion y "/" en local:
+// normalizamos para construir rutas absolutas sin dobles barras.
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    color-scheme: light dark;
+    --color-bg: #fbf9f6;
+    --color-text: #2f2a26;
+    --color-muted: #6f665e;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg: #17140f;
+      --color-text: #f2ede6;
+      --color-muted: #a9a097;
+    }
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+</style>

@@ -1,0 +1,49 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Manuel y Lucia">
+  <main>
+    <p class="eyebrow">Nos casamos</p>
+    <h1>Manuel <span>&amp;</span> Lucia</h1>
+    <p class="nota">Estamos preparando la web. Muy pronto, aqui toda la informacion.</p>
+  </main>
+</Layout>
+
+<style>
+  main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 100vh;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: 0.8rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  h1 {
+    margin: 0;
+    font-weight: 400;
+    font-size: clamp(2.5rem, 10vw, 4.5rem);
+    line-height: 1.1;
+  }
+
+  h1 span {
+    color: var(--color-muted);
+  }
+
+  .nota {
+    margin: 1rem 0 0;
+    max-width: 32ch;
+    color: var(--color-muted);
+  }
+</style>

@@ -1,0 +1,217 @@
+---
+import { Image } from 'astro:assets';
+import laurel from '../assets/laurel.png';
+import arbol from '../assets/arbol.png';
+
+interface Props {
+  /** Texto del titulo script: cambia entre las dos entradas */
+  titulo: string;
+}
+
+const { titulo } = Astro.props;
+---
+
+<section class="portada">
+  <div class="marco-exterior"></div>
+  <div class="marco-interior"></div>
+
+  <div class="cabecera">
+    <h1 class="entrada">{titulo}</h1>
+
+    <div class="laurel">
+      <Image src={laurel} alt="" width={300} loading="eager" />
+    </div>
+
+    <p class="novia">LUCÍA</p>
+    <p class="amp">&amp;</p>
+    <p class="novio">MANUEL</p>
+
+    <p class="fecha">Sábado · 26.12.2026 · 17:30 h</p>
+    <p class="lugar">Señorío de Nevada · Granada</p>
+  </div>
+
+  <!--
+    Cuenta atras. Los valores se calculan en cliente; el HTML sale con guiones
+    para que, sin JS o antes de hidratar, no se vea un cero enganoso.
+  -->
+  <div class="cuenta-atras" data-cuenta-atras>
+    <div class="arbol">
+      <Image src={arbol} alt="" width={300} loading="lazy" />
+    </div>
+    <div class="celda"><span class="cifra" data-cd="d">–</span><span class="etiqueta">DÍAS</span></div>
+    <div class="celda"><span class="cifra" data-cd="h">–</span><span class="etiqueta">HORAS</span></div>
+    <div class="celda"><span class="cifra" data-cd="m">–</span><span class="etiqueta">MIN</span></div>
+    <div class="celda"><span class="cifra" data-cd="s">–</span><span class="etiqueta">SEG</span></div>
+  </div>
+</section>
+
+<style>
+  .portada {
+    position: relative;
+    padding: 22px 18px 84px;
+  }
+
+  .marco-exterior,
+  .marco-interior {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .marco-exterior {
+    inset: 10px;
+    border: 1.5px solid var(--dorado);
+  }
+
+  .marco-interior {
+    inset: 15px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+  }
+
+  .cabecera {
+    position: relative;
+    padding: 26px 14px 10px;
+    text-align: center;
+  }
+
+  .entrada {
+    margin: 0;
+    font-family: var(--script);
+    font-size: 44px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .laurel {
+    display: flex;
+    justify-content: center;
+    margin: 12px auto 20px;
+  }
+
+  .laurel :global(img) {
+    display: block;
+    width: 150px;
+    height: auto;
+    mix-blend-mode: multiply;
+  }
+
+  .novia,
+  .novio {
+    margin: 0;
+    font-size: 38px;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    line-height: 1.05;
+    color: var(--verde-oscuro);
+  }
+
+  .amp {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--dorado);
+  }
+
+  .fecha {
+    margin: 22px 0 0;
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--texto);
+  }
+
+  .lugar {
+    margin: 6px 0 0;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dorado-oscuro);
+  }
+
+  .cuenta-atras {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin: 22px 22px 0;
+    padding: 14px 8px;
+    border-top: 0.5px solid var(--dorado);
+    border-bottom: 0.5px solid var(--dorado);
+  }
+
+  /*
+    El arbol sobresale por arriba y por abajo de la franja: cierra la portada.
+    Por eso la seccion lleva 84px de padding inferior y no hay overflow:hidden.
+  */
+  .arbol {
+    position: absolute;
+    top: -84px;
+    right: -4px;
+    pointer-events: none;
+  }
+
+  .arbol :global(img) {
+    display: block;
+    width: 150px;
+    height: auto;
+    opacity: 0.32;
+    mix-blend-mode: multiply;
+  }
+
+  .celda {
+    position: relative;
+    text-align: center;
+  }
+
+  .cifra {
+    display: block;
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--verde-oscuro);
+    /* Evita que la franja "salte" al pasar de 9 a 10 */
+    font-variant-numeric: tabular-nums;
+  }
+
+  .etiqueta {
+    display: block;
+    margin-top: 4px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--dorado-oscuro);
+  }
+</style>
+
+<script>
+  // Diferencia de reloj de pared: absorbe el cambio de hora de octubre para que
+  // las horas cuadren con el calendario, no con el desfase UTC.
+  const objetivo = new Date(2026, 11, 26, 17, 30, 0);
+  const raiz = document.querySelector<HTMLElement>('[data-cuenta-atras]');
+
+  if (raiz) {
+    const celdas = {
+      d: raiz.querySelector<HTMLElement>('[data-cd="d"]'),
+      h: raiz.querySelector<HTMLElement>('[data-cd="h"]'),
+      m: raiz.querySelector<HTMLElement>('[data-cd="m"]'),
+      s: raiz.querySelector<HTMLElement>('[data-cd="s"]'),
+    };
+
+    const dosDigitos = (n: number) => String(n).padStart(2, '0');
+
+    const pintar = () => {
+      const ahora = new Date();
+      const desfase = (objetivo.getTimezoneOffset() - ahora.getTimezoneOffset()) * 60000;
+      const diff = Math.max(0, objetivo.getTime() - ahora.getTime() - desfase);
+
+      if (celdas.d) celdas.d.textContent = String(Math.floor(diff / 864e5));
+      if (celdas.h) celdas.h.textContent = dosDigitos(Math.floor(diff / 36e5) % 24);
+      if (celdas.m) celdas.m.textContent = dosDigitos(Math.floor(diff / 6e4) % 60);
+      if (celdas.s) celdas.s.textContent = dosDigitos(Math.floor(diff / 1e3) % 60);
+    };
+
+    pintar();
+    setInterval(pintar, 1000);
+  }
+</script>

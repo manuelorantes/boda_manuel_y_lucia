@@ -1,0 +1,651 @@
+---
+import { Image } from 'astro:assets';
+import eeveeMew from '../assets/eevee-mew.png';
+
+interface Props {
+  /** La entrada VIP anade la pregunta de alojamiento */
+  variante: 'vip' | 'general';
+}
+
+const { variante } = Astro.props;
+const esVip = variante === 'vip';
+---
+
+<section class="confirmacion">
+  <div class="tarjeta" data-rsvp data-variante={variante}>
+    <div class="marco-interior"></div>
+
+    <header>
+      <p class="titulo">Confirma tu asistencia</p>
+      <p class="limite">antes del 30 de noviembre de 2026</p>
+    </header>
+
+    <div class="rombos" data-rombos aria-hidden="true"></div>
+
+    <div class="contenido">
+      <div class="paso" data-paso="name" hidden>
+        <label class="pregunta" for="rsvp-nombre">¿Cómo te llamas?</label>
+        <input
+          id="rsvp-nombre"
+          class="texto"
+          type="text"
+          autocomplete="name"
+          placeholder="Nombre y apellidos"
+          data-campo="name"
+        />
+      </div>
+
+      <div class="paso" data-paso="attend" hidden>
+        <p class="pregunta"><span data-nombre-pila>Hola</span>, ¿podrás acompañarnos?</p>
+        <div class="opciones columna">
+          <button type="button" class="opcion" data-accion="attend" data-valor="si">
+            Sí, allí estaré
+          </button>
+          <button type="button" class="opcion" data-accion="attend" data-valor="no">
+            No podré ir
+          </button>
+        </div>
+      </div>
+
+      <div class="paso" data-paso="guests" hidden>
+        <p class="pregunta">¿Vienes con alguien más?</p>
+        <div class="stepper">
+          <button type="button" data-accion="guests-menos" aria-label="Quitar acompañante">−</button>
+          <span data-guests-etiqueta>Voy solo/a</span>
+          <button type="button" data-accion="guests-mas" aria-label="Añadir acompañante">+</button>
+        </div>
+        <textarea
+          class="area"
+          rows="3"
+          placeholder="Sus nombres y apellidos"
+          data-campo="guestNames"
+          data-si-guests
+          hidden></textarea>
+      </div>
+
+      <div class="paso" data-paso="kids" hidden>
+        <p class="pregunta">¿Vienen niños?</p>
+        <div class="opciones fila">
+          <button type="button" class="opcion" data-accion="kids" data-valor="si">Sí</button>
+          <button type="button" class="opcion" data-accion="kids" data-valor="no">No</button>
+        </div>
+        <div data-si-kids hidden>
+          <div class="stepper">
+            <button type="button" data-accion="kids-menos" aria-label="Quitar niño">−</button>
+            <span data-kids-etiqueta>1 niño/a</span>
+            <button type="button" data-accion="kids-mas" aria-label="Añadir niño">+</button>
+          </div>
+          <textarea class="area separado" rows="2" placeholder="Sus nombres" data-campo="kidsNames"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="paso" data-paso="allergies" hidden>
+        <p class="pregunta">¿Alguna alergia o intolerancia?</p>
+        <p class="ayuda">Incluye las de tus acompañantes.</p>
+        <textarea class="area" rows="3" placeholder="Ninguna, o cuéntanos" data-campo="allergies"
+        ></textarea>
+      </div>
+
+      <div class="paso" data-paso="song" hidden>
+        <p class="pregunta">
+          Dinos tu 'placer culpable' musical definitivo: ese tema que si suena, no puedes evitar
+          cantarlo.
+        </p>
+        <p class="ayuda">Opcional</p>
+        <input class="texto" type="text" placeholder="Artista · Canción" data-campo="song" />
+      </div>
+
+      {
+        esVip && (
+          <div class="paso" data-paso="lodging" hidden>
+            <p class="pregunta">Tu estancia en Señorío de Nevada está incluida</p>
+            <p class="ayuda">¿Te quedarás a dormir la noche del 26?</p>
+            <div class="opciones fila">
+              <button type="button" class="opcion" data-accion="lodge" data-valor="si">
+                Sí
+              </button>
+              <button type="button" class="opcion" data-accion="lodge" data-valor="no">
+                No
+              </button>
+            </div>
+          </div>
+        )
+      }
+
+      <div class="paso" data-paso="summary" hidden>
+        <p class="pregunta">Revisa antes de enviar</p>
+        <div class="resumen" data-resumen></div>
+        <p class="error" data-error hidden>
+          No hemos podido enviar tu confirmación. Comprueba tu conexión y vuelve a intentarlo.
+        </p>
+      </div>
+
+      <div class="paso final" data-paso="done" hidden>
+        <p class="done-titulo" data-done-titulo></p>
+        <p class="done-texto" data-done-texto></p>
+        <div class="ilustracion">
+          <Image src={eeveeMew} alt="" width={400} loading="lazy" />
+        </div>
+      </div>
+    </div>
+
+    <div class="navegacion" data-navegacion>
+      <button type="button" class="atras" data-atras hidden>Atrás</button>
+      <button type="button" class="siguiente" data-siguiente>Siguiente</button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .confirmacion {
+    padding: 6px 18px 30px;
+  }
+
+  .tarjeta {
+    position: relative;
+    padding: 26px 20px 24px;
+    border: 1.5px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.55);
+  }
+
+  .marco-interior {
+    position: absolute;
+    inset: 4px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+    pointer-events: none;
+  }
+
+  header {
+    position: relative;
+    text-align: center;
+  }
+
+  .titulo {
+    margin: 0;
+    font-family: var(--script);
+    font-size: 36px;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
+  .limite {
+    margin: 8px 0 0;
+    font-size: 15px;
+    color: var(--texto-suave);
+  }
+
+  .rombos {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0 22px;
+  }
+
+  .rombos :global(i) {
+    width: 7px;
+    height: 7px;
+    border: 0.5px solid var(--dorado);
+    transform: rotate(45deg);
+  }
+
+  .rombos :global(i.hecho) {
+    background: var(--dorado);
+  }
+
+  .contenido {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+  }
+
+  .paso {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .paso[hidden] {
+    display: none;
+  }
+
+  .pregunta {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.3;
+  }
+
+  .ayuda {
+    margin: -8px 0 0;
+    font-size: 15px;
+    color: var(--texto-suave);
+  }
+
+  .texto {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: none;
+    border-bottom: 1px solid var(--dorado);
+    background: transparent;
+    color: var(--texto);
+    font-size: 18px;
+    outline: none;
+  }
+
+  .texto:focus {
+    border-bottom-color: var(--verde-oscuro);
+  }
+
+  .area {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(163, 121, 42, 0.6);
+    background: transparent;
+    color: var(--texto);
+    font-size: 17px;
+    outline: none;
+    resize: none;
+  }
+
+  .area:focus {
+    border-color: var(--verde-oscuro);
+  }
+
+  .area.separado {
+    margin-top: 14px;
+  }
+
+  .opciones {
+    display: flex;
+    gap: 10px;
+  }
+
+  .opciones.columna {
+    flex-direction: column;
+  }
+
+  .opciones.fila > .opcion {
+    flex: 1;
+  }
+
+  .opcion {
+    min-height: 50px;
+    border: 1px solid var(--dorado);
+    background: transparent;
+    color: var(--texto);
+    font-size: 17px;
+    cursor: pointer;
+  }
+
+  .opcion[aria-pressed='true'] {
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+  }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--dorado);
+  }
+
+  .stepper > span {
+    font-size: 22px;
+  }
+
+  .stepper > button {
+    width: 56px;
+    min-height: 50px;
+    border: none;
+    background: transparent;
+    color: var(--dorado-oscuro);
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  .resumen {
+    display: flex;
+    flex-direction: column;
+    font-size: 16px;
+  }
+
+  .resumen :global(div) {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 0.5px solid rgba(163, 121, 42, 0.4);
+  }
+
+  .resumen :global(span:first-child) {
+    color: var(--dorado-oscuro);
+  }
+
+  .resumen :global(span:last-child) {
+    text-align: right;
+  }
+
+  .error {
+    margin: 0;
+    font-size: 15px;
+    color: #8c2f2f;
+  }
+
+  .final {
+    padding-top: 10px;
+    text-align: center;
+  }
+
+  .done-titulo {
+    margin: 0;
+    font-family: var(--script);
+    font-size: 40px;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
+  .done-texto {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.4;
+    color: var(--texto);
+  }
+
+  .ilustracion {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .ilustracion :global(img) {
+    display: block;
+    width: 200px;
+    height: auto;
+    mix-blend-mode: multiply;
+  }
+
+  .navegacion {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .navegacion[hidden] {
+    display: none;
+  }
+
+  .atras,
+  .siguiente {
+    min-height: 50px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .atras {
+    padding: 0 18px;
+    border: 1px solid var(--dorado);
+    background: transparent;
+    color: var(--dorado-oscuro);
+  }
+
+  .atras[hidden] {
+    display: none;
+  }
+
+  .siguiente {
+    flex: 1;
+    border: 1px solid var(--dorado-oscuro);
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+  }
+
+  .siguiente:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+</style>
+
+<script>
+  import { enviar, type Respuestas, type Variante } from '../lib/googleForm';
+
+  const raiz = document.querySelector<HTMLElement>('[data-rsvp]');
+
+  if (raiz) {
+    const variante = (raiz.dataset.variante ?? 'general') as Variante;
+    const esVip = variante === 'vip';
+
+    const r: Respuestas = {
+      name: '',
+      attend: null,
+      guests: 0,
+      guestNames: '',
+      kids: null,
+      kidsN: 1,
+      kidsNames: '',
+      allergies: '',
+      song: '',
+      lodge: null,
+    };
+
+    let paso = 0;
+    let enviado = false;
+    let enviando = false;
+    let fallo = false;
+
+    const $ = <T extends HTMLElement>(sel: string) => raiz.querySelector<T>(sel);
+    const $$ = <T extends HTMLElement>(sel: string) => Array.from(raiz.querySelectorAll<T>(sel));
+
+    const rombos = $('[data-rombos]')!;
+    const navegacion = $('[data-navegacion]')!;
+    const btnAtras = $<HTMLButtonElement>('[data-atras]')!;
+    const btnSiguiente = $<HTMLButtonElement>('[data-siguiente]')!;
+    const cajaError = $('[data-error]')!;
+
+    /** El itinerario depende de la variante y de si el invitado asiste. */
+    const itinerario = (): string[] => {
+      if (r.attend === false) return ['name', 'attend', 'summary'];
+      return [
+        'name',
+        'attend',
+        'guests',
+        'kids',
+        'allergies',
+        'song',
+        ...(esVip ? ['lodging'] : []),
+        'summary',
+      ];
+    };
+
+    const esValido = (id: string): boolean => {
+      switch (id) {
+        case 'name':
+          return r.name.trim().length > 1;
+        case 'attend':
+          return r.attend !== null;
+        case 'guests':
+          return r.guests === 0 || r.guestNames.trim().length > 0;
+        case 'kids':
+          return r.kids === false || (r.kids === true && r.kidsNames.trim().length > 0);
+        case 'lodging':
+          return r.lodge !== null;
+        default:
+          return true;
+      }
+    };
+
+    const filasResumen = () => {
+      const filas: Array<[string, string]> = [
+        ['Nombre', r.name.trim()],
+        ['Asistencia', r.attend ? 'Sí' : 'No'],
+      ];
+      if (r.attend) {
+        filas.push([
+          'Acompañantes',
+          r.guests ? `${r.guests} · ${r.guestNames.trim()}` : 'Ninguno',
+        ]);
+        filas.push(['Niños', r.kids ? `${r.kidsN} · ${r.kidsNames.trim()}` : 'No']);
+        filas.push(['Alergias', r.allergies.trim() || 'Ninguna']);
+        if (r.song.trim()) filas.push(['Placer culpable', r.song.trim()]);
+        if (esVip) filas.push(['Alojamiento', r.lodge ? 'Sí, noche del 26' : 'No']);
+      }
+      return filas;
+    };
+
+    const pintar = () => {
+      const lista = itinerario();
+      paso = Math.min(paso, lista.length - 1);
+      const id = enviado ? 'done' : lista[paso];
+
+      $$('.paso').forEach((el) => {
+        el.hidden = el.dataset.paso !== id;
+      });
+
+      // Rombos: uno por paso, rellenos hasta el actual
+      rombos.hidden = enviado;
+      if (!enviado) {
+        rombos.replaceChildren(
+          ...lista.map((_, i) => {
+            const rombo = document.createElement('i');
+            if (i <= paso) rombo.classList.add('hecho');
+            return rombo;
+          }),
+        );
+      }
+
+      const pila = r.name.trim().split(' ')[0] || 'Hola';
+      $('[data-nombre-pila]')!.textContent = pila;
+
+      $('[data-guests-etiqueta]')!.textContent =
+        r.guests === 0 ? 'Voy solo/a' : r.guests === 1 ? '1 acompañante' : `${r.guests} acompañantes`;
+      $('[data-si-guests]')!.hidden = r.guests === 0;
+
+      $('[data-kids-etiqueta]')!.textContent = r.kidsN === 1 ? '1 niño/a' : `${r.kidsN} niños`;
+      $('[data-si-kids]')!.hidden = r.kids !== true;
+
+      $$('[data-accion="attend"]').forEach((b) =>
+        b.setAttribute('aria-pressed', String(r.attend === (b.dataset.valor === 'si'))),
+      );
+      $$('[data-accion="kids"]').forEach((b) =>
+        b.setAttribute('aria-pressed', String(r.kids === (b.dataset.valor === 'si'))),
+      );
+      $$('[data-accion="lodge"]').forEach((b) =>
+        b.setAttribute('aria-pressed', String(r.lodge === (b.dataset.valor === 'si'))),
+      );
+
+      if (id === 'summary') {
+        $('[data-resumen]')!.replaceChildren(
+          ...filasResumen().map(([clave, valor]) => {
+            const fila = document.createElement('div');
+            const k = document.createElement('span');
+            k.textContent = clave;
+            const v = document.createElement('span');
+            v.textContent = valor;
+            fila.append(k, v);
+            return fila;
+          }),
+        );
+      }
+
+      cajaError.hidden = !fallo;
+
+      if (enviado) {
+        $('[data-done-titulo]')!.textContent = r.attend
+          ? '¡Nos vemos allí!'
+          : 'Gracias por avisarnos';
+        $('[data-done-texto]')!.textContent = r.attend
+          ? 'Hemos recibido tu confirmación. Ayúdanos a preparar un gran día: si algo cambia, escríbenos.'
+          : 'Te echaremos de menos. Si cambian tus planes antes del 30 de noviembre, avísanos.';
+      }
+
+      navegacion.hidden = enviado;
+      btnAtras.hidden = paso === 0;
+      btnSiguiente.textContent = enviando
+        ? 'Enviando…'
+        : id === 'summary'
+          ? 'Enviar'
+          : 'Siguiente';
+      btnSiguiente.disabled = enviando || !esValido(id);
+    };
+
+    // --- entradas de texto -------------------------------------------------
+    $$<HTMLInputElement | HTMLTextAreaElement>('[data-campo]').forEach((campo) => {
+      campo.addEventListener('input', () => {
+        const clave = campo.dataset.campo as 'name' | 'guestNames' | 'kidsNames' | 'allergies' | 'song';
+        r[clave] = campo.value;
+        pintar();
+      });
+    });
+
+    // --- botones -----------------------------------------------------------
+    raiz.addEventListener('click', (ev) => {
+      const boton = (ev.target as HTMLElement).closest<HTMLElement>('[data-accion]');
+      if (!boton) return;
+      const si = boton.dataset.valor === 'si';
+
+      switch (boton.dataset.accion) {
+        case 'attend':
+          r.attend = si;
+          break;
+        case 'kids':
+          r.kids = si;
+          break;
+        case 'lodge':
+          r.lodge = si;
+          break;
+        case 'guests-mas':
+          r.guests = Math.min(6, r.guests + 1);
+          break;
+        case 'guests-menos':
+          r.guests = Math.max(0, r.guests - 1);
+          break;
+        case 'kids-mas':
+          r.kidsN = Math.min(8, r.kidsN + 1);
+          break;
+        case 'kids-menos':
+          r.kidsN = Math.max(1, r.kidsN - 1);
+          break;
+      }
+      pintar();
+    });
+
+    btnAtras.addEventListener('click', () => {
+      paso = Math.max(0, paso - 1);
+      fallo = false;
+      pintar();
+    });
+
+    btnSiguiente.addEventListener('click', async () => {
+      const lista = itinerario();
+      const id = lista[Math.min(paso, lista.length - 1)];
+      if (!esValido(id) || enviando) return;
+
+      if (id !== 'summary') {
+        paso += 1;
+        pintar();
+        return;
+      }
+
+      enviando = true;
+      fallo = false;
+      pintar();
+      try {
+        await enviar(r, variante);
+        enviado = true;
+      } catch {
+        // Solo llega aqui si falla la red: la respuesta de Google es opaca.
+        fallo = true;
+      } finally {
+        enviando = false;
+        pintar();
+      }
+    });
+
+    pintar();
+  }
+</script>

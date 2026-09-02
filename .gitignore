@@ -22,3 +22,9 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# material de diseno entregado (referencia, no codigo de produccion)
+design_handoff_boda_lucia_manuel/
+Sitio Web Mobile QR/
+*.zip
+*:Zone.Identifier

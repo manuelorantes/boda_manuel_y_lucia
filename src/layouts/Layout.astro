@@ -1,13 +1,26 @@
 ---
+// Fuentes autoalojadas (@fontsource) en lugar de Google Fonts: evita una
+// conexion extra a fonts.gstatic.com, que en movil cuesta cientos de ms.
+//
+// Solo el subset "latin": cubre todo el castellano de la pagina, incluido el
+// signo menos U+2212 del stepper y los guiones de U+2000-206F. Importar los
+// css completos arrastraria tambien cirilico y vietnamita, que no se usan.
+import '@fontsource/cormorant-garamond/latin-400.css';
+import '@fontsource/cormorant-garamond/latin-500.css';
+import '@fontsource/cormorant-garamond/latin-600.css';
+import '@fontsource/cormorant-garamond/latin-400-italic.css';
+import '@fontsource/pinyon-script/latin-400.css';
+
 interface Props {
   title: string;
   description?: string;
 }
 
-const { title, description = 'Nos casamos. Toda la informacion de la boda.' } = Astro.props;
+const {
+  title,
+  description = 'Lucía y Manuel se casan el 26 de diciembre de 2026 en Señorío de Nevada, Granada. Toda la información y confirmación de asistencia.',
+} = Astro.props;
 
-// BASE_URL vale "/boda_manuel_y_lucia" en produccion y "/" en local:
-// normalizamos para construir rutas absolutas sin dobles barras.
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
@@ -18,28 +31,43 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
+    <meta name="theme-color" content="#d9cbab" />
+    <!-- La invitacion es privada: se llega por el QR de la entrada, no por buscador -->
+    <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
     <title>{title}</title>
   </head>
   <body>
-    <slot />
+    <div class="fondo">
+      <main>
+        <slot />
+      </main>
+    </div>
   </body>
 </html>
 
 <style is:global>
   :root {
-    color-scheme: light dark;
-    --color-bg: #fbf9f6;
-    --color-text: #2f2a26;
-    --color-muted: #6f665e;
-  }
+    /* Pergamino */
+    --pergamino-claro: #f7f0de;
+    --pergamino-medio: #f0e6cd;
+    --pergamino-oscuro: #e6d8b7;
+    /* Fondo exterior */
+    --fondo-exterior: #d9cbab;
+    --fondo-exterior-claro: #ece1c7;
+    /* Dorados */
+    --dorado: #a3792a;
+    --dorado-oscuro: #8a6423;
+    --dorado-hover: #5c4014;
+    /* Texto */
+    --texto: #4a3416;
+    --texto-suave: #6b4e22;
+    --verde-oscuro: #2f3d33;
+    --placeholder: #b6a380;
+    --sobre-dorado: #f7f0de;
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --color-bg: #17140f;
-      --color-text: #f2ede6;
-      --color-muted: #a9a097;
-    }
+    --script: 'Pinyon Script', cursive;
+    --serif: 'Cormorant Garamond', Georgia, serif;
   }
 
   *,
@@ -48,13 +76,80 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     box-sizing: border-box;
   }
 
+  html,
   body {
     margin: 0;
-    min-height: 100vh;
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-    line-height: 1.6;
+    padding: 0;
+    background: var(--fondo-exterior);
+  }
+
+  body {
+    font-family: var(--serif);
+    color: var(--texto);
     -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--dorado-oscuro);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--dorado-hover);
+  }
+
+  input,
+  textarea,
+  button {
+    font-family: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--placeholder);
+  }
+
+  .fondo {
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 0%, var(--fondo-exterior-claro) 0%, var(--fondo-exterior) 70%);
+  }
+
+  main {
+    position: relative;
+    width: 100%;
+    max-width: 430px;
+    min-height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(
+      ellipse at 30% 20%,
+      var(--pergamino-claro) 0%,
+      var(--pergamino-medio) 45%,
+      var(--pergamino-oscuro) 100%
+    );
+    box-shadow: 0 0 60px rgba(90, 60, 20, 0.18);
+  }
+
+  /* Divisor linea-rombo-linea, reutilizado entre secciones */
+  .divisor {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .divisor::before,
+  .divisor::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: var(--dorado);
+  }
+
+  .divisor i {
+    width: 6px;
+    height: 6px;
+    background: var(--dorado);
+    transform: rotate(45deg);
   }
 </style>

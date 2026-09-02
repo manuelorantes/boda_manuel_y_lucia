@@ -1,0 +1,136 @@
+---
+const MAPA = 'https://maps.app.goo.gl/KQpEZoszp1jsFZWA9';
+
+const contactos = [
+  { nombre: 'Lucía', telefono: '+34600000001', visible: '600 000 001' },
+  { nombre: 'Manuel', telefono: '+34600000002', visible: '600 000 002' },
+];
+---
+
+<section class="info">
+  <div class="divisor"><i></i></div>
+
+  <div class="bloque">
+    <h2>CUÁNDO</h2>
+    <p class="dato">Sábado 26 de diciembre de 2026</p>
+    <h2 class="segundo">HORARIO</h2>
+    <p class="detalle">17:30 h · Ceremonia</p>
+  </div>
+
+  <div class="bloque">
+    <h2>DÓNDE</h2>
+    <p class="dato">Señorío de Nevada</p>
+    <p class="detalle">Ctra de Conchar, s/n · 18659 Granada</p>
+    <a class="boton-mapa" href={MAPA} target="_blank" rel="noopener">Cómo llegar</a>
+    <p class="parrafo">
+      Señorío de Nevada es una bodega y hotel en el Valle de Lecrín, entre viñedos y con Sierra
+      Nevada al fondo. Ese día dispondremos de la totalidad del espacio. Incluye parking para todos
+      los invitados.
+    </p>
+  </div>
+
+  <div class="bloque">
+    <h2>DRESS CODE</h2>
+    <p class="dato">Etiqueta</p>
+  </div>
+
+  <div class="bloque">
+    <h2>CONTACTO</h2>
+    <div class="contactos">
+      {
+        contactos.map((c) => (
+          <a href={`tel:${c.telefono}`}>
+            <span>{c.nombre}</span>
+            <span class="numero">{c.visible}</span>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .info {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 10px 28px 26px;
+  }
+
+  .bloque {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.24em;
+    color: var(--dorado-oscuro);
+  }
+
+  h2.segundo {
+    margin-top: 10px;
+  }
+
+  .dato {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.3;
+  }
+
+  .detalle {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.35;
+    color: var(--texto-suave);
+  }
+
+  .boton-mapa {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    margin-top: 8px;
+    border: 1px solid var(--dorado);
+    color: var(--dorado-oscuro);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .boton-mapa:hover {
+    background: rgba(163, 121, 42, 0.08);
+    color: var(--dorado-oscuro);
+  }
+
+  .parrafo {
+    margin: 12px 0 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--texto-suave);
+    text-wrap: pretty;
+  }
+
+  .contactos {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 18px;
+  }
+
+  .contactos a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    border-bottom: 0.5px solid rgba(163, 121, 42, 0.4);
+    color: var(--texto);
+  }
+
+  .numero {
+    color: var(--dorado-oscuro);
+  }
+</style>

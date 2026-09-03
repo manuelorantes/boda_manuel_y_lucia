@@ -26,6 +26,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Los telefonos no estan en el repositorio: se escriben aqui desde los
+      # secretos para que Astro los lea igual que el .env local. El fichero solo
+      # existe dentro del runner, que se destruye al terminar el job.
+      - name: Write .env from secrets
+        run: |
+          {
+            echo "TEL_LUCIA=${{ secrets.TEL_LUCIA }}"
+            echo "TEL_MANUEL=${{ secrets.TEL_MANUEL }}"
+          } > .env
+
       - name: Install, build and upload site
         uses: withastro/action@v3
         with:

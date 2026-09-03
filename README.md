@@ -31,6 +31,28 @@ npm run build    # comprueba tipos y genera dist/
 npm run preview  # sirve dist/ en local
 ```
 
+### Variables de entorno
+
+Los teléfonos de contacto **no están en el repositorio**, porque es público. Hay
+que crear un `.env` en la raíz (ya está en `.gitignore`):
+
+```bash
+TEL_LUCIA=+34XXXXXXXXX
+TEL_MANUEL=+34XXXXXXXXX
+```
+
+En formato internacional y sin espacios. Si falta alguno, el bloque CONTACTO no
+se renderiza y el build lo avisa por consola, en lugar de fallar.
+
+En CI los mismos valores llegan desde los secretos del repositorio (Settings >
+Secrets and variables > Actions, con esos dos nombres); el workflow escribe el
+`.env` dentro del runner justo antes de construir.
+
+Además, `Informacion.astro` no emite los números en claro en el HTML: los
+codifica en build y los recompone en el navegador. Es una barrera contra
+rastreadores automáticos, **no** un secreto: la web es pública y quien mire el
+`data-tel` con calma puede deshacer la codificación.
+
 ## Estructura
 
 ```

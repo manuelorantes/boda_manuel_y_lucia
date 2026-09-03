@@ -1,10 +1,28 @@
 ---
 const MAPA = 'https://maps.app.goo.gl/KQpEZoszp1jsFZWA9';
 
+// Los telefonos no viven en el repositorio: entran en tiempo de build desde
+// variables de entorno (.env en local, secretos de Actions en CI). Ademas se
+// emiten codificados, para que quien rastree el HTML publicado no se los lleve
+// en texto plano; el numero se recompone en el navegador.
+//
+// Esto disuade a los rastreadores automaticos, no oculta el numero: la web es
+// publica y cualquiera que mire con calma puede deshacer la codificacion.
+const ofuscar = (tel: string) => btoa([...tel.trim()].reverse().join(''));
+
 const contactos = [
-  { nombre: 'Lucía', telefono: '+34600000001', visible: '600 000 001' },
-  { nombre: 'Manuel', telefono: '+34600000002', visible: '600 000 002' },
-];
+  { nombre: 'Lucía', telefono: import.meta.env.TEL_LUCIA },
+  { nombre: 'Manuel', telefono: import.meta.env.TEL_MANUEL },
+]
+  .filter((c) => Boolean(c.telefono))
+  .map((c) => ({ nombre: c.nombre, codigo: ofuscar(c.telefono as string) }));
+
+if (contactos.length === 0) {
+  console.warn(
+    '[Informacion] Faltan TEL_LUCIA / TEL_MANUEL: el bloque CONTACTO se omite. ' +
+      'Crea un .env local o define los secretos del repositorio en Actions.',
+  );
+}
 ---
 
 <section class="info">
@@ -34,20 +52,53 @@ const contactos = [
     <p class="dato">Etiqueta</p>
   </div>
 
-  <div class="bloque">
-    <h2>CONTACTO</h2>
-    <div class="contactos">
-      {
-        contactos.map((c) => (
-          <a href={`tel:${c.telefono}`}>
-            <span>{c.nombre}</span>
-            <span class="numero">{c.visible}</span>
-          </a>
-        ))
-      }
-    </div>
-  </div>
+  {
+    contactos.length > 0 && (
+      <div class="bloque">
+        <h2>CONTACTO</h2>
+        <div class="contactos">
+          {contactos.map((c) => (
+            <a class="contacto" data-tel={c.codigo} aria-label={`Llamar a ${c.nombre}`}>
+              <span>{c.nombre}</span>
+              <span class="numero">··· ··· ···</span>
+            </a>
+          ))}
+        </div>
+        <noscript>
+          <p class="detalle sin-js">
+            Activa JavaScript para ver los teléfonos, o escríbenos desde el formulario de
+            confirmación.
+          </p>
+        </noscript>
+      </div>
+    )
+  }
 </section>
+
+<script>
+  // Deshace la codificacion del build (base64 de la cadena invertida) y monta
+  // el enlace real. Se ejecuta en el navegador, asi que el numero nunca aparece
+  // en el HTML que se sirve.
+  const revelar = (codigo: string) => [...atob(codigo)].reverse().join('');
+
+  // +34600123456 -> 600 123 456
+  const paraLeer = (tel: string) =>
+    tel.replace(/^\+34/, '').replace(/(\d{3})(?=\d)/g, '$1 ').trim();
+
+  document.querySelectorAll<HTMLAnchorElement>('.contacto[data-tel]').forEach((enlace) => {
+    const codigo = enlace.dataset.tel;
+    if (!codigo) return;
+
+    try {
+      const tel = revelar(codigo);
+      enlace.href = `tel:${tel}`;
+      const numero = enlace.querySelector('.numero');
+      if (numero) numero.textContent = paraLeer(tel);
+    } catch {
+      // Codigo corrupto: se deja el marcador de puntos en lugar de romper la pagina.
+    }
+  });
+</script>
 
 <style>
   .info {
@@ -130,7 +181,17 @@ const contactos = [
     color: var(--texto);
   }
 
+  /* El href lo pone el script al cargar, asi que el cursor no llega solo. */
+  .contactos a[href] {
+    cursor: pointer;
+  }
+
   .numero {
     color: var(--dorado-oscuro);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sin-js {
+    margin-top: 10px;
   }
 </style>

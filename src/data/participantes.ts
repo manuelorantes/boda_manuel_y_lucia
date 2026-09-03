@@ -22,8 +22,8 @@ export interface Participante {
 }
 
 export const PARTICIPANTES: Participante[] = [
-  { foto: 'abuela', nombre: 'Eloisa DEP *', descripcion: '¡Que croquetas hacía!' },
-  { foto: 'abuelo', nombre: 'Manuel DEP *', descripcion: 'Cuidaba las plantas mejor que tú' },
+  { foto: 'abuela', nombre: 'Eloisa DEP ⭐', descripcion: '¡Que croquetas hacía!' },
+  { foto: 'abuelo', nombre: 'Manuel DEP ⭐', descripcion: 'Cuidaba las plantas mejor que tú' },
   {
     foto: 'ale_josetxu',
     nombre: 'Ale y Josetxu',
@@ -48,7 +48,7 @@ export const PARTICIPANTES: Participante[] = [
   {
     foto: 'carmela_jose',
     nombre: 'Carmela y José',
-    descripcion: 'Viajeros empedernidos. La familia que se elije',
+    descripcion: 'Viajeros empedernidos. La familia que se elige',
   },
   {
     foto: 'carmen',
@@ -57,12 +57,12 @@ export const PARTICIPANTES: Participante[] = [
   },
   {
     foto: 'consuelo',
-    nombre: 'Abuela Consuelo DEP *',
+    nombre: 'Abuela Consuelo DEP ⭐',
     descripcion: 'A Manuel le pegaba con una sartén si se metía con su nieta',
   },
   {
     foto: 'doraimon',
-    nombre: 'Doraimon DEP *',
+    nombre: 'Doraimon DEP ⭐',
     descripcion: 'Amante de polvorones, siempre estaba cuando lo necesitabas',
   },
   {
@@ -78,7 +78,7 @@ export const PARTICIPANTES: Participante[] = [
   { foto: 'francisco', nombre: 'Francisco', descripcion: 'Alma libre y arrolladora' },
   {
     foto: 'ildefonso_victoria_jose_luis_ada_moka',
-    nombre: 'Ildefonso, Victoria, Jose Luis DEP *, Ada y Moka',
+    nombre: 'Ildefonso, Victoria, José Luis DEP ⭐, Ada y Moka',
     descripcion: 'Persiguieron a la novia en barco. De Ceuta a Granada',
   },
   {
@@ -99,7 +99,7 @@ export const PARTICIPANTES: Participante[] = [
   },
   {
     foto: 'laura_lola',
-    nombre: 'Laura y Lola DEP *',
+    nombre: 'Laura y Lola DEP ⭐',
     descripcion: 'Celestina sin saberlo. Afortunados de tenerla como familia',
   },
   { foto: 'lucia', nombre: 'Lucía', descripcion: 'La novia' },
@@ -111,14 +111,14 @@ export const PARTICIPANTES: Participante[] = [
   { foto: 'manolo', nombre: 'Manolo', descripcion: 'Ajedrez y gallinas llenan su vida' },
   {
     foto: 'manuel_kiara',
-    nombre: 'Manuel y Kiara DEP *',
+    nombre: 'Manuel y Kiara DEP ⭐',
     descripcion: 'El novio y patapollo',
   },
   { foto: 'marcos_andrea', nombre: 'Marcos y Andrea', descripcion: 'Son los siguientes' },
-  { foto: 'maria', nombre: 'Maria', descripcion: 'Representando a la Familia Orantes' },
+  { foto: 'maria', nombre: 'María', descripcion: 'Representando a la Familia Orantes' },
   {
     foto: 'mariangeles',
-    nombre: 'MªÁngeles',
+    nombre: 'Mª Ángeles',
     descripcion: 'Relaciones públicas de la familia y amante del chocolate negro',
   },
   {
@@ -126,7 +126,7 @@ export const PARTICIPANTES: Participante[] = [
     nombre: 'Micaela',
     descripcion: 'Llorona incansable hasta conseguir cariño',
   },
-  { foto: 'nala_oddye', nombre: 'Nala y Oddye DEP *', descripcion: 'Guardianes protectores' },
+  { foto: 'nala_oddye', nombre: 'Nala y Oddye DEP ⭐', descripcion: 'Guardianes protectores' },
   {
     foto: 'nuria_juande',
     nombre: 'Nuria y Juande',
@@ -136,6 +136,6 @@ export const PARTICIPANTES: Participante[] = [
   {
     foto: 'Zaira',
     nombre: 'Zaira',
-    descripcion: 'Matemática presumida. Complice de nuestra historia',
+    descripcion: 'Matemática presumida. Cómplice de nuestra historia',
   },
 ];

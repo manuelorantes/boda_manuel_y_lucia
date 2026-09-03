@@ -1,7 +1,21 @@
 ---
+import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 import eeveeMew from '../assets/eevee-mew.png';
 import { PARTICIPANTES } from '../data/participantes';
+
+const fotos = import.meta.glob<{ default: ImageMetadata }>('../assets/*.jpg', { eager: true });
+
+const fichas = PARTICIPANTES.map((p) => {
+  const modulo = fotos[`../assets/${p.foto}.jpg`];
+  if (!modulo) {
+    throw new Error(
+      `[Participantes] Falta src/assets/${p.foto}.jpg, referenciada desde ` +
+        'src/data/participantes.ts. Se corta el build para no publicar la ficha vacia.',
+    );
+  }
+  return { ...p, imagen: modulo.default };
+});
 ---
 
 <section class="vista participantes" data-vista="participantes" hidden>
@@ -20,16 +34,21 @@ import { PARTICIPANTES } from '../data/participantes';
 
   <div class="rejilla">
     {
-      PARTICIPANTES.map((p) => (
+      fichas.map((f) => (
         <div class="ficha">
-          {/* PENDIENTE: sustituir el hueco por la foto de cada participante. */}
-          <div class="foto">foto {p.n}</div>
+          {/*
+            El alt no dice quien es: seria regalar la solucion a quien navegue
+            con lector de pantalla o mire el codigo.
+          */}
+          <div class="foto">
+            <Image src={f.imagen} alt="Foto de quien participó en el vídeo" width={400} loading="lazy" />
+          </div>
 
           <button class="pista" type="button" data-revelar>Pista</button>
-          <p class="descripcion" hidden>{p.descripcion}</p>
+          <p class="descripcion" hidden>{f.descripcion}</p>
 
           <button class="solucion" type="button" data-revelar>Solución</button>
-          <p class="nombre" hidden>{p.nombre}</p>
+          <p class="nombre" hidden>{f.nombre}</p>
         </div>
       ))
     }
@@ -142,19 +161,28 @@ import { PARTICIPANTES } from '../data/participantes';
   }
 
   .foto {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     aspect-ratio: 1;
     border: 1px solid var(--dorado);
+    /* La trama se ve mientras la imagen carga en diferido. */
     background: repeating-linear-gradient(
       135deg,
       rgba(163, 121, 42, 0.1) 0 6px,
       transparent 6px 12px
     );
-    font-family: ui-monospace, Menlo, monospace;
-    font-size: 10px;
-    color: var(--dorado-oscuro);
+  }
+
+  /*
+    El cuadrado va en la imagen, no solo en el contenedor: con height:100%
+    contra una altura automatica el navegador conserva la proporcion original
+    y las fotos verticales estiraban su celda, descuadrando las dos columnas.
+    Recorta en vez de deformar; las fotos vienen en 4:3 y en 3:4.
+  */
+  .foto :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
   }
 
   .pista,
@@ -322,6 +350,23 @@ import { PARTICIPANTES } from '../data/participantes';
 </style>
 
 <script>
+  // La rejilla se baraja en cada carga: asi el juego no tiene un orden
+  // memorizable y dos invitados mirando a la vez no ven la misma cuadricula.
+  // Sin JavaScript queda el orden del fichero de datos, que tampoco delata
+  // nada porque es alfabetico por fichero, no por nombre.
+  const rejilla = document.querySelector<HTMLElement>('.participantes .rejilla');
+
+  if (rejilla) {
+    const fichas = [...rejilla.children];
+    // Fisher-Yates.
+    for (let i = fichas.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [fichas[i], fichas[j]] = [fichas[j], fichas[i]];
+    }
+    // append mueve los nodos existentes, no los duplica.
+    rejilla.append(...fichas);
+  }
+
   // Cada boton de revelar se sustituye por el texto que oculta. Como el par
   // boton/texto son hermanos, basta con intercambiar el atributo hidden.
   document.querySelectorAll<HTMLButtonElement>('.participantes [data-revelar]').forEach((boton) => {

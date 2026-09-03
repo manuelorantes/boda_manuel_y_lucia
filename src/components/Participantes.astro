@@ -1,0 +1,336 @@
+---
+import { Image } from 'astro:assets';
+import eeveeMew from '../assets/eevee-mew.png';
+import { PARTICIPANTES } from '../data/participantes';
+---
+
+<section class="vista participantes" data-vista="participantes" hidden>
+  <div class="marco-exterior"></div>
+  <div class="marco-interior"></div>
+
+  <div class="barra">
+    <a class="volver" href="#" data-ir-a="historia">← Volver</a>
+    <span class="firma">LUCÍA &amp; MANUEL</span>
+  </div>
+
+  <div class="titulo">
+    <h2>Los que participaron</h2>
+    <p class="subtitulo">¿Los conoces a todos?</p>
+  </div>
+
+  <div class="rejilla">
+    {
+      PARTICIPANTES.map((p) => (
+        <div class="ficha">
+          {/* PENDIENTE: sustituir el hueco por la foto de cada participante. */}
+          <div class="foto">foto {p.n}</div>
+
+          <button class="pista" type="button" data-revelar>Pista</button>
+          <p class="descripcion" hidden>{p.descripcion}</p>
+
+          <button class="solucion" type="button" data-revelar>Solución</button>
+          <p class="nombre" hidden>{p.nombre}</p>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="divisor"><i></i></div>
+
+  <div class="prueba">
+    <div class="marco-prueba"></div>
+    <div class="contenido">
+      <p class="epigrafe">PRUEBA ESPECIAL</p>
+      <h3>¡Hazte con todos!</h3>
+      <p class="destacado">
+        Ve por la boda haciéndote fotos con todos los que puedas, ¡cada persona que atrapes suma!
+      </p>
+      <p class="parrafo">El que consiga más "Pokémons" ganará un premio muy especial.</p>
+      <div class="ilustracion">
+        <Image src={eeveeMew} alt="" width={300} loading="lazy" />
+      </div>
+    </div>
+  </div>
+
+  <div class="pie-vista">
+    <a class="boton-solido" href="#" data-ir-a="historia">Volver a nuestra historia</a>
+  </div>
+</section>
+
+<style>
+  .participantes {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 100vh;
+    padding: 22px 18px 40px;
+  }
+
+  .marco-exterior,
+  .marco-interior {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .marco-exterior {
+    inset: 10px;
+    border: 1.5px solid var(--dorado);
+  }
+
+  .marco-interior {
+    inset: 15px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+  }
+
+  .barra {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 10px 0;
+  }
+
+  .volver {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 6px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .firma {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--dorado);
+  }
+
+  .titulo {
+    position: relative;
+    text-align: center;
+  }
+
+  .titulo h2 {
+    margin: 0;
+    font-family: var(--script);
+    font-size: 40px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
+  .subtitulo {
+    margin: 8px 0 0;
+    font-size: 15px;
+    color: var(--texto-suave);
+  }
+
+  .rejilla {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 12px;
+    padding: 0 10px;
+  }
+
+  .ficha {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .foto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    border: 1px solid var(--dorado);
+    background: repeating-linear-gradient(
+      135deg,
+      rgba(163, 121, 42, 0.1) 0 6px,
+      transparent 6px 12px
+    );
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px;
+    color: var(--dorado-oscuro);
+  }
+
+  .pista,
+  .solucion {
+    min-height: 40px;
+    border: 1px solid var(--dorado);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .pista {
+    background: transparent;
+    color: var(--dorado-oscuro);
+  }
+
+  .solucion {
+    border-color: var(--dorado-oscuro);
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+  }
+
+  .descripcion,
+  .nombre {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    margin: 0;
+    text-align: center;
+    animation: revelar 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .descripcion {
+    font-size: 14px;
+    line-height: 1.3;
+    color: var(--texto-suave);
+  }
+
+  .nombre {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--dorado-oscuro);
+  }
+
+  @keyframes revelar {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.96);
+      filter: blur(3px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .descripcion,
+    .nombre {
+      animation: none;
+    }
+  }
+
+  .divisor {
+    position: relative;
+    padding: 8px 10px 0;
+  }
+
+  .prueba {
+    position: relative;
+    margin: 0 10px;
+    padding: 26px 20px 24px;
+    border: 1.5px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.55);
+  }
+
+  .marco-prueba {
+    position: absolute;
+    inset: 4px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+    pointer-events: none;
+  }
+
+  .contenido {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .epigrafe {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    color: var(--dorado-oscuro);
+  }
+
+  .prueba h3 {
+    margin: 0;
+    font-family: var(--script);
+    font-size: 38px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
+  .destacado,
+  .parrafo {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .destacado {
+    color: var(--texto);
+  }
+
+  .parrafo {
+    color: var(--texto-suave);
+  }
+
+  .ilustracion {
+    display: flex;
+    justify-content: center;
+    margin-top: 6px;
+  }
+
+  .ilustracion :global(img) {
+    display: block;
+    width: 150px;
+    height: auto;
+    mix-blend-mode: multiply;
+  }
+
+  .pie-vista {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-top: 6px;
+  }
+
+  .boton-solido {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0 28px;
+    border: 1px solid var(--dorado-oscuro);
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .boton-solido:hover {
+    color: var(--sobre-dorado);
+  }
+</style>
+
+<script>
+  // Cada boton de revelar se sustituye por el texto que oculta. Como el par
+  // boton/texto son hermanos, basta con intercambiar el atributo hidden.
+  document.querySelectorAll<HTMLButtonElement>('.participantes [data-revelar]').forEach((boton) => {
+    boton.addEventListener('click', () => {
+      const revelado = boton.nextElementSibling;
+      if (!(revelado instanceof HTMLElement)) return;
+
+      boton.hidden = true;
+      revelado.hidden = false;
+    });
+  });
+</script>

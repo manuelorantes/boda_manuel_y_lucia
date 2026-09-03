@@ -47,12 +47,20 @@ const contactos = definidos.map((c) => ({
     <h2>DÓNDE</h2>
     <p class="dato">Señorío de Nevada</p>
     <p class="detalle">Ctra de Conchar, s/n · 18659 Granada</p>
-    <a class="boton-mapa" href={MAPA} target="_blank" rel="noopener">Cómo llegar</a>
+    <a class="boton" href={MAPA} target="_blank" rel="noopener">Cómo llegar</a>
     <p class="parrafo">
       Señorío de Nevada es una bodega y hotel en el Valle de Lecrín, entre viñedos y con Sierra
       Nevada al fondo. Ese día dispondremos de la totalidad del espacio. Incluye parking para todos
       los invitados.
     </p>
+  </div>
+
+  <div class="bloque">
+    <h2>NUESTRA HISTORIA</h2>
+    <p class="detalle">
+      ¡Conoce cómo se gestó el evento navideño del 2026, con arte, música y vídeos!
+    </p>
+    <a class="boton" href="#historia" data-ir-a="historia">Conoce nuestra historia</a>
   </div>
 
   <div class="bloque">
@@ -144,7 +152,7 @@ const contactos = definidos.map((c) => ({
     color: var(--texto-suave);
   }
 
-  .boton-mapa {
+  .boton {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -157,7 +165,7 @@ const contactos = definidos.map((c) => ({
     text-transform: uppercase;
   }
 
-  .boton-mapa:hover {
+  .boton:hover {
     background: rgba(163, 121, 42, 0.08);
     color: var(--dorado-oscuro);
   }

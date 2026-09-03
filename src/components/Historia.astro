@@ -1,0 +1,414 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import laurel from '../assets/laurel.png';
+
+// El comic es opcional a proposito: se importa por glob en vez de con un
+// import directo para que la web siga construyendo mientras no este el
+// fichero. Si falta, en su lugar se dibuja el hueco rayado.
+const modulos = import.meta.glob<{ default: ImageMetadata }>('../assets/comic.png', {
+  eager: true,
+});
+const comic = Object.values(modulos)[0]?.default;
+---
+
+<section class="vista historia" data-vista="historia" hidden>
+  <div class="marco-exterior"></div>
+  <div class="marco-interior"></div>
+
+  <div class="barra">
+    <a class="volver" href="#" data-ir-a="invitacion">← Volver</a>
+    <span class="firma">LUCÍA &amp; MANUEL</span>
+  </div>
+
+  <div class="titulo">
+    <h2>Nuestra historia</h2>
+    <p class="subtitulo">Dibujada por nosotros (Lucía)</p>
+  </div>
+
+  <div class="comic">
+    {
+      comic ? (
+        <Image src={comic} alt="Cómic de nuestra historia" width={800} loading="lazy" />
+      ) : (
+        <p class="hueco-comic">Falta assets/comic.png</p>
+      )
+    }
+  </div>
+
+  <div class="divisor"><i></i></div>
+
+  <div class="bloque">
+    <h3>La pedida</h3>
+    <p class="parrafo">
+      Este vídeo se hizo para la pedida de mano. Muchos familiares y amigos participaron apareciendo
+      en las estrofas de una canción.
+    </p>
+
+    <!-- PENDIENTE: sustituir por el iframe del video cuando haya enlace. -->
+    <div class="video">
+      <span class="play"></span>
+      <span class="pie-video">VÍDEO DE LA PEDIDA</span>
+    </div>
+
+    <a class="boton" href="#" data-ir-a="participantes">¡Conoce a los que participaron!</a>
+  </div>
+
+  <div class="divisor"><i></i></div>
+
+  <div class="bloque">
+    <h3>La estrofa</h3>
+    <p class="parrafo">
+      La canción del vídeo tiene una estrofa que nos acompaña desde entonces. ¿Sabes dónde más
+      aparece?
+    </p>
+    <button class="boton" type="button" data-abrir-estrofa>Nuestra estrofa favorita</button>
+  </div>
+
+  <div class="pie-vista">
+    <a class="boton-solido" href="#" data-ir-a="invitacion">Volver a la invitación</a>
+  </div>
+</section>
+
+<div class="capa" data-estrofa hidden>
+  <div class="tarjeta" role="dialog" aria-modal="true" aria-label="Nuestra estrofa favorita">
+    <div class="marco-tarjeta"></div>
+    <div class="estrofa">
+      <p>Ay, oruguitas, no se aguanten más</p>
+      <p>hay que crecer aparte y volver</p>
+      <p>hacia adelante seguirás</p>
+      <p>vienen milagros, vienen crisálidas</p>
+      <p>hay que partir y construir su propio futuro</p>
+    </div>
+    <div class="laurel">
+      <Image src={laurel} alt="" width={220} loading="lazy" />
+    </div>
+    <button class="cerrar" type="button" data-cerrar-estrofa>Cerrar</button>
+  </div>
+</div>
+
+<style>
+  .historia {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 100vh;
+    padding: 22px 18px 40px;
+  }
+
+  .marco-exterior,
+  .marco-interior {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .marco-exterior {
+    inset: 10px;
+    border: 1.5px solid var(--dorado);
+  }
+
+  .marco-interior {
+    inset: 15px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+  }
+
+  .barra {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 10px 0;
+  }
+
+  .volver {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 6px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .firma {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--dorado);
+  }
+
+  .titulo {
+    position: relative;
+    text-align: center;
+  }
+
+  .titulo h2 {
+    margin: 0;
+    font-family: var(--script);
+    font-size: 40px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
+  .subtitulo {
+    margin: 8px 0 0;
+    font-size: 15px;
+    color: var(--texto-suave);
+  }
+
+  .comic {
+    position: relative;
+    padding: 0 10px;
+  }
+
+  .comic :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--dorado);
+    box-shadow: 0 8px 30px rgba(90, 60, 20, 0.18);
+  }
+
+  /* Hueco mientras no este la ilustracion, con la misma trama que las fotos */
+  .hueco-comic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 3 / 4;
+    margin: 0;
+    border: 1px solid var(--dorado);
+    background: repeating-linear-gradient(
+      135deg,
+      rgba(163, 121, 42, 0.1) 0 6px,
+      transparent 6px 12px
+    );
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    color: var(--dorado-oscuro);
+  }
+
+  .divisor {
+    position: relative;
+    padding: 8px 10px 0;
+  }
+
+  .bloque {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 10px;
+  }
+
+  .bloque h3 {
+    margin: 0;
+    font-family: var(--script);
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1;
+    text-align: center;
+    color: var(--dorado-oscuro);
+  }
+
+  .parrafo {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--texto-suave);
+    text-wrap: pretty;
+  }
+
+  .video {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--dorado);
+    background: var(--verde-oscuro);
+    box-shadow: 0 8px 30px rgba(90, 60, 20, 0.18);
+  }
+
+  .play {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border: 1.5px solid var(--fondo-exterior);
+    border-radius: 50%;
+  }
+
+  .play::after {
+    content: '';
+    margin-left: 4px;
+    border-color: transparent transparent transparent var(--pergamino-claro);
+    border-style: solid;
+    border-width: 10px 0 10px 17px;
+  }
+
+  .pie-video {
+    position: absolute;
+    right: 0;
+    bottom: 10px;
+    left: 0;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--fondo-exterior);
+  }
+
+  .boton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    border: 1px solid var(--dorado);
+    background: transparent;
+    color: var(--dorado-oscuro);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .boton:hover {
+    background: rgba(163, 121, 42, 0.08);
+    color: var(--dorado-oscuro);
+  }
+
+  .pie-vista {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-top: 6px;
+  }
+
+  .boton-solido {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0 28px;
+    border: 1px solid var(--dorado-oscuro);
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .boton-solido:hover {
+    color: var(--sobre-dorado);
+  }
+
+  /* --- Modal de la estrofa --- */
+
+  .capa {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(74, 52, 22, 0.45);
+  }
+
+  .tarjeta {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    padding: 34px 24px 28px;
+    border: 1.5px solid var(--dorado);
+    background: rgba(247, 240, 222, 0.9);
+    box-shadow: 0 20px 60px rgba(40, 25, 5, 0.35);
+  }
+
+  .marco-tarjeta {
+    position: absolute;
+    inset: 4px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+    pointer-events: none;
+  }
+
+  .estrofa {
+    position: relative;
+    text-align: center;
+    font-family: var(--script);
+    font-size: 22px;
+    line-height: 1.75;
+    color: var(--dorado-oscuro);
+  }
+
+  .estrofa p {
+    margin: 0;
+  }
+
+  .laurel {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+  }
+
+  .laurel :global(img) {
+    display: block;
+    width: 110px;
+    height: auto;
+    mix-blend-mode: multiply;
+  }
+
+  .cerrar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    margin: 22px auto 0;
+    padding: 0 22px;
+    border: 1px solid var(--dorado);
+    background: transparent;
+    color: var(--dorado-oscuro);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  // El modal de la estrofa se abre sobre la pantalla de historia. Vive aparte
+  // del cambio de vistas porque no navega: solo se superpone.
+  const capa = document.querySelector<HTMLElement>('[data-estrofa]');
+
+  if (capa) {
+    const abrir = () => {
+      capa.hidden = false;
+      capa.querySelector<HTMLButtonElement>('[data-cerrar-estrofa]')?.focus();
+    };
+    const cerrar = () => {
+      capa.hidden = true;
+    };
+
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-abrir-estrofa]')
+      .forEach((boton) => boton.addEventListener('click', abrir));
+
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-cerrar-estrofa]')
+      .forEach((boton) => boton.addEventListener('click', cerrar));
+
+    // Pulsar el fondo cierra; pulsar la tarjeta no.
+    capa.addEventListener('click', (evento) => {
+      if (evento.target === capa) cerrar();
+    });
+
+    document.addEventListener('keydown', (evento) => {
+      if (evento.key === 'Escape' && !capa.hidden) cerrar();
+    });
+  }
+</script>

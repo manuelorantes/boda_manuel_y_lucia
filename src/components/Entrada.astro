@@ -1,0 +1,94 @@
+---
+import Portada from './Portada.astro';
+import Informacion from './Informacion.astro';
+import Confirmacion from './Confirmacion.astro';
+import Pie from './Pie.astro';
+import Historia from './Historia.astro';
+import Participantes from './Participantes.astro';
+
+interface Props {
+  /** Texto del titulo script de la portada. */
+  titulo: string;
+  /** Decide los pasos de la confirmacion: la VIP pregunta por alojamiento. */
+  variante: 'general' | 'vip';
+}
+
+const { titulo, variante } = Astro.props;
+---
+
+{/* Las tres vistas conviven en la misma pagina y se turnan, como en el diseno */}
+<div class="vista" data-vista="invitacion">
+  <Portada titulo={titulo} />
+  <Informacion />
+  <Confirmacion variante={variante} />
+  <Pie />
+</div>
+
+<Historia />
+<Participantes />
+
+<noscript>
+  <!--
+    Sin JavaScript no hay cambio de vista, asi que se muestran las tres
+    seguidas: se pierde la navegacion, pero no el contenido.
+  -->
+  <style>
+    .vista[hidden] {
+      display: block !important;
+    }
+  </style>
+</noscript>
+
+<script>
+  // Las vistas se turnan en el sitio, sin recargar, igual que en el diseno.
+  // El hash mantiene el boton "atras" del movil util y hace enlazables las
+  // pantallas: /#historia entra directamente en ella.
+  const VISTAS = ['invitacion', 'historia', 'participantes'] as const;
+  type Vista = (typeof VISTAS)[number];
+
+  const secciones = new Map<Vista, HTMLElement>();
+  for (const nombre of VISTAS) {
+    const elemento = document.querySelector<HTMLElement>(`[data-vista="${nombre}"]`);
+    if (elemento) secciones.set(nombre, elemento);
+  }
+
+  const esVista = (valor: string): valor is Vista => VISTAS.includes(valor as Vista);
+
+  const mostrar = (vista: Vista, subirArriba: boolean) => {
+    for (const [nombre, seccion] of secciones) {
+      seccion.hidden = nombre !== vista;
+    }
+    if (subirArriba) window.scrollTo(0, 0);
+  };
+
+  const desdeHash = (): Vista => {
+    const hash = window.location.hash.replace('#', '');
+    return esVista(hash) ? hash : 'invitacion';
+  };
+
+  // Estado inicial: respeta el hash con el que se llega.
+  mostrar(desdeHash(), false);
+
+  document.querySelectorAll<HTMLElement>('[data-ir-a]').forEach((disparador) => {
+    disparador.addEventListener('click', (evento) => {
+      const destino = disparador.dataset.irA;
+      if (!destino || !esVista(destino)) return;
+
+      evento.preventDefault();
+      // pushState en vez de asignar el hash: para volver a la invitacion deja
+      // la URL limpia, sin un "#" colgando.
+      const url =
+        destino === 'invitacion'
+          ? window.location.pathname + window.location.search
+          : `#${destino}`;
+      history.pushState(null, '', url);
+      mostrar(destino, true);
+    });
+  });
+
+  // popstate cubre atras/adelante del navegador. hashchange cubre el caso en
+  // que el enlace se pulse antes de que este script llegue a engancharse: ahi
+  // el ancla navega sola y solo cambia el hash.
+  window.addEventListener('popstate', () => mostrar(desdeHash(), true));
+  window.addEventListener('hashchange', () => mostrar(desdeHash(), true));
+</script>

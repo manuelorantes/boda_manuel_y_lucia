@@ -23,10 +23,14 @@ export const GOOGLE_CLIENT_ID =
 /**
  * Album compartido de Google Fotos.
  *
- * PENDIENTE: sustituir por el enlace real. Mientras este vacio, la pantalla
- * del album muestra un aviso en vez de un boton roto.
+ * Se usa el enlace corto y no la URL larga de photos.google.com: el corto
+ * sobrevive a que se regenere el enlace de compartir. Si se deja vacio, la
+ * pantalla del album muestra un aviso en vez de un boton roto.
+ *
+ * Para que los invitados puedan SUBIR y no solo mirar, el album tiene que
+ * tener activada la opcion "Colaborar" en Google Fotos.
  */
-export const ALBUM_URL = '';
+export const ALBUM_URL = 'https://photos.app.goo.gl/NRyd9TckyjceHC919';
 
 /**
  * Ancho al que se recorta cada foto antes de guardarla.

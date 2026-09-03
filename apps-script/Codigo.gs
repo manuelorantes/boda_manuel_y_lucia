@@ -20,8 +20,14 @@
 
 const FOLDER_ID = '1D1Ueo7FnYXRoPRc0A8TqnJh0QBgdUCDO';
 
-/** ID de cliente OAuth (Google Cloud > Credenciales). Pendiente de crear. */
-const CLIENT_ID = 'PENDIENTE.apps.googleusercontent.com';
+/**
+ * ID de cliente OAuth (Google Cloud > Credenciales).
+ *
+ * Es publico por diseno: va tambien en el codigo de la web. Lo que impide
+ * suplantar a nadie no es esconderlo, sino comprobar que el token que llega
+ * fue emitido para este mismo cliente.
+ */
+const CLIENT_ID = '464845944511-jfk0lo638e0s794q7upoe13k2pjgijhk.apps.googleusercontent.com';
 
 const HOJA = 'Capturas';
 const MAX_BYTES = 700 * 1024; // por foto; llegan recortadas a 480 px

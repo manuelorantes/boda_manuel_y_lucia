@@ -35,6 +35,13 @@ const MAX_BYTES = 700 * 1024; // por foto; llegan recortadas a 480 px
 function doPost(e) {
   try {
     const peticion = JSON.parse(e.postData.contents);
+
+    // Diagnostico, sin identificarse a proposito: sirve para comprobar desde
+    // fuera QUE version esta desplegada y como esta configurada, sin tener
+    // que adivinar. No expone nada privado: el ID de cliente es publico y de
+    // la carpeta y la hoja solo se dice si se alcanzan, no su contenido.
+    if (peticion.accion === 'diagnostico') return json(diagnostico());
+
     const usuario = verificarToken(peticion.idToken);
     if (!usuario) return json({ ok: false, error: 'auth' });
 
@@ -51,6 +58,38 @@ function doPost(e) {
   } catch (err) {
     return json({ ok: false, error: String(err) });
   }
+}
+
+/**
+ * Estado de la configuracion, para poder depurar sin ir a ciegas.
+ *
+ * Lo mas util es `clientIdPuesto`: si sale false, el script sigue con el
+ * PENDIENTE y rechazara TODAS las fotos aunque el invitado se identifique
+ * bien, porque el token nunca coincidira.
+ */
+function diagnostico() {
+  const resultado = {
+    ok: true,
+    clientId: CLIENT_ID,
+    clientIdPuesto: CLIENT_ID.indexOf('PENDIENTE') === -1,
+    carpeta: 'sin comprobar',
+    hoja: 'sin comprobar',
+  };
+
+  try {
+    resultado.carpeta = DriveApp.getFolderById(FOLDER_ID).getName();
+  } catch (err) {
+    resultado.carpeta = 'ERROR: ' + String(err);
+  }
+
+  try {
+    const h = hoja();
+    resultado.hoja = h ? h.getName() + ' (' + h.getLastRow() + ' filas)' : 'ERROR: no existe ' + HOJA;
+  } catch (err) {
+    resultado.hoja = 'ERROR: ' + String(err);
+  }
+
+  return resultado;
 }
 
 /**

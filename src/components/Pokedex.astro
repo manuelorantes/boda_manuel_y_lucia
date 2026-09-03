@@ -59,7 +59,13 @@ const huecos = HUECOS.map((h) => {
         <div class="hueco" data-hueco={h.n} data-persona={h.nombre}>
           <button class="marco-foto" type="button" aria-label={`Subir tu foto con ${h.nombre}`}>
             <Image class="objetivo" src={h.imagen} alt="" width={400} loading="lazy" />
-            <img class="capturada" alt="" hidden />
+            {/*
+              Sin atributo hidden a proposito: quien decide si se ve es la
+              regla de .hueco[data-estado-hueco], no el atributo. Con hidden
+              puesto, la regla global [hidden]{display:none!important} lo
+              tapaba para siempre y el hueco relleno se quedaba vacio.
+            */}
+            <img class="capturada" alt="" />
             <span class="capa">
               <span class="accion">SUBIR FOTO</span>
             </span>
@@ -500,6 +506,7 @@ const huecos = HUECOS.map((h) => {
     cerrarSesion,
     descargarFoto,
     identificarse,
+    explicar,
     prepararFoto,
     subirFoto,
     usuarioGuardado,
@@ -525,6 +532,8 @@ const huecos = HUECOS.map((h) => {
     const sesion = seccion.querySelector<HTMLElement>('[data-sesion]');
 
     let usuario: Usuario | null = usuarioGuardado();
+    /** Motivo del ultimo fallo de envio, para poder decirlo en pantalla. */
+    let ultimoFallo = '';
     let fotos: Record<string, Guardada> = leerFotos();
 
     function leerFotos(): Record<string, Guardada> {
@@ -589,10 +598,17 @@ const huecos = HUECOS.map((h) => {
       if (barra) barra.style.width = `${(llenos / huecos.length) * 100}%`;
 
       const pendientes = Object.values(fotos).filter((f) => !f.ficheroId).length;
+
+      if (!pendientes) {
+        mostrarAviso('');
+        return;
+      }
+
+      const cuantas = `${pendientes} ${pendientes === 1 ? 'foto sigue' : 'fotos siguen'} sin enviar`;
       mostrarAviso(
-        pendientes
-          ? `${pendientes} ${pendientes === 1 ? 'foto sigue' : 'fotos siguen'} sin enviar. Se reintenta solo cuando vuelvas a esta pantalla con cobertura.`
-          : '',
+        ultimoFallo
+          ? `${cuantas}. ${ultimoFallo}`
+          : `${cuantas}. Se reintenta solo cuando vuelvas a esta pantalla con cobertura.`,
       );
     }
 
@@ -651,9 +667,12 @@ const huecos = HUECOS.map((h) => {
       try {
         const { ficheroId } = await subirFoto(usuario, n, persona, dataUrl);
         fotos[String(n)] = { dataUrl, ficheroId };
-      } catch {
-        // Se queda en el movil y se reintenta al volver a entrar.
+        ultimoFallo = '';
+      } catch (error) {
+        // Se queda en el movil y se reintenta al volver a entrar. Guardamos
+        // el motivo: un "sin enviar" mudo no deja depurar nada.
         fotos[String(n)] = { dataUrl };
+        ultimoFallo = explicar(error);
       }
 
       guardarFotos();

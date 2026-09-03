@@ -1,7 +1,7 @@
 ---
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
-import eeveeMew from '../assets/eevee-mew.png';
+import pokeballs from '../assets/pokeballs.png';
 import { PARTICIPANTES } from '../data/participantes';
 
 const fotos = import.meta.glob<{ default: ImageMetadata }>('../assets/*.jpg', { eager: true });
@@ -75,7 +75,7 @@ const ENCUADRE = { arriba: 'top', centro: 'center', abajo: 'bottom' } as const;
       </p>
       <p class="parrafo">El que consiga más "Pokémons" ganará un premio muy especial.</p>
       <div class="ilustracion">
-        <Image src={eeveeMew} alt="" width={300} loading="lazy" />
+        <Image src={pokeballs} alt="" width={340} loading="lazy" />
       </div>
     </div>
   </div>
@@ -327,7 +327,7 @@ const ENCUADRE = { arriba: 'top', centro: 'center', abajo: 'bottom' } as const;
 
   .ilustracion :global(img) {
     display: block;
-    width: 150px;
+    width: 170px;
     height: auto;
     mix-blend-mode: multiply;
   }

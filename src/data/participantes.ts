@@ -28,10 +28,10 @@ export interface Participante {
 }
 
 export const PARTICIPANTES: Participante[] = [
-  { foto: 'abuela', nombre: 'Abuela Eloisa DEP ⭐', descripcion: '¡Que croquetas hacía!' },
+  { foto: 'abuela', nombre: 'Abuela Eloisa DEP ★', descripcion: '¡Que croquetas hacía!' },
   {
     foto: 'abuelo',
-    nombre: 'Abuelo Manolo DEP ⭐',
+    nombre: 'Abuelo Manolo DEP ★',
     descripcion: 'Cuidaba las plantas mejor que tú',
   },
   {
@@ -67,12 +67,12 @@ export const PARTICIPANTES: Participante[] = [
   },
   {
     foto: 'consuelo',
-    nombre: 'Abuela Consuelo DEP ⭐',
+    nombre: 'Abuela Consuelo DEP ★',
     descripcion: 'A Manuel le pegaba con una sartén si se metía con su nieta',
   },
   {
     foto: 'doraimon',
-    nombre: 'Doraimon DEP ⭐',
+    nombre: 'Doraimon DEP ★',
     descripcion: 'Amante de polvorones, siempre estaba cuando lo necesitabas',
   },
   {
@@ -88,7 +88,7 @@ export const PARTICIPANTES: Participante[] = [
   { foto: 'francisco', nombre: 'Francisco', descripcion: 'Alma libre y arrolladora' },
   {
     foto: 'ildefonso_victoria_jose_luis_ada_moka',
-    nombre: 'Ildefonso, Victoria, José Luis DEP ⭐, Ada y Moka',
+    nombre: 'Ildefonso, Victoria, José Luis DEP ★, Ada y Moka',
     descripcion: 'Persiguieron a la novia en barco. De Ceuta a Granada',
   },
   {
@@ -109,7 +109,7 @@ export const PARTICIPANTES: Participante[] = [
   },
   {
     foto: 'laura_lola',
-    nombre: 'Laura y Lola DEP ⭐',
+    nombre: 'Laura y Lola DEP ★',
     descripcion: 'Celestina sin saberlo. Afortunados de tenerla como familia',
   },
   { foto: 'lucia', nombre: 'Lucía', descripcion: 'La novia' },
@@ -121,7 +121,7 @@ export const PARTICIPANTES: Participante[] = [
   { foto: 'manolo', nombre: 'Manolo', descripcion: 'Ajedrez y gallinas llenan su vida' },
   {
     foto: 'manuel_kiara',
-    nombre: 'Manuel y Kiara DEP ⭐',
+    nombre: 'Manuel y Kiara DEP ★',
     descripcion: 'El novio y patapollo',
   },
   {
@@ -142,7 +142,7 @@ export const PARTICIPANTES: Participante[] = [
     nombre: 'Micaela',
     descripcion: 'Llorona incansable hasta conseguir cariño',
   },
-  { foto: 'nala_oddye', nombre: 'Nala y Oddye DEP ⭐', descripcion: 'Guardianes protectores' },
+  { foto: 'nala_oddye', nombre: 'Nala y Oddye DEP ★', descripcion: 'Guardianes protectores' },
   {
     foto: 'nuria_juande',
     nombre: 'Nuria y Juande',

@@ -22,6 +22,10 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    # Los telefonos son secretos del entorno github-pages, no del repositorio.
+    # El job tiene que declarar el entorno para poder leerlos; sin esto llegan
+    # vacios y el build aborta al renderizar el bloque CONTACTO.
+    environment: github-pages
     steps:
       - name: Checkout
         uses: actions/checkout@v4

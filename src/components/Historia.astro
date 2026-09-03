@@ -6,7 +6,7 @@ import laurel from '../assets/laurel.png';
 // El comic es opcional a proposito: se importa por glob en vez de con un
 // import directo para que la web siga construyendo mientras no este el
 // fichero. Si falta, en su lugar se dibuja el hueco rayado.
-const modulos = import.meta.glob<{ default: ImageMetadata }>('../assets/comic.png', {
+const modulos = import.meta.glob<{ default: ImageMetadata }>('../assets/comic.{jpg,png}', {
   eager: true,
 });
 const comic = Object.values(modulos)[0]?.default;
@@ -32,9 +32,15 @@ const VIDEO_PEDIDA = '_tIOM2qpBmw';
   <div class="comic">
     {
       comic ? (
-        <Image src={comic} alt="Cómic de nuestra historia" width={800} loading="lazy" />
+        <Image
+          src={comic}
+          alt="Cómic dibujado a mano que cuenta la historia de Lucía y Manuel, desde el viaje por el mundo hasta la pedida en Japón"
+          widths={[400, 800, 1200]}
+          sizes="(max-width: 430px) 100vw, 374px"
+          loading="lazy"
+        />
       ) : (
-        <p class="hueco-comic">Falta assets/comic.png</p>
+        <p class="hueco-comic">Falta src/assets/comic.jpg</p>
       )
     }
   </div>

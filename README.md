@@ -61,22 +61,19 @@ ruta a ficheros de `public/` debe construirse con `import.meta.env.BASE_URL`
 El formulario paso a paso vive en `Confirmacion.astro` y envía por `POST` a un
 Google Form (`src/lib/googleForm.ts`).
 
-### Pendiente: faltan preguntas en el Google Form
+### El Google Form
 
-El formulario actual **no tiene todas las preguntas del diseño**:
+Formulario de **una sola página, sin secciones y con todas las preguntas
+opcionales y de texto libre**. Es deliberado: como enviamos por `POST` directo
+en vez de rellenar el formulario real, cualquier validación de Google (campos
+obligatorios, o opciones cerradas que deben coincidir letra a letra) solo puede
+rechazar la respuesta, y al ser opaca no nos enteraríamos. Quien valida es la
+web, en `Confirmacion.astro`.
 
-| Dato del diseño | Estado en el Google Form |
-|---|---|
-| Nombre, asistencia, acompañantes, niños, alergias, canción | ✅ existen |
-| Nº de acompañantes / nº de niños | ⚠️ no hay campo: se antepone al de nombres (`2 · Ana, Juan`) |
-| **Alojamiento (solo VIP)** | ❌ **no existe** |
-| **Variante (vip/general)** | ❌ **no existe** |
-
-Mientras no existan, alojamiento y variante se añaden como un bloque etiquetado
-al final del campo de canciones, para no perder el dato. **Es un apaño**: en
-cuanto se creen las preguntas en el Google Form, basta con poner sus
-`entry.NNN` en `CAMPOS.alojamiento` y `CAMPOS.variante` (en `src/lib/googleForm.ts`)
-y el añadido desaparece solo.
+Las 11 preguntas se mapean una a una en `CAMPOS` (`src/lib/googleForm.ts`),
+incluidas la variante de entrada y el alojamiento. Si se edita el formulario y
+cambian los `entry.NNN`, se recuperan del HTML de `/viewform`, dentro de
+`FB_PUBLIC_LOAD_DATA_`.
 
 ### Limitación del envío
 

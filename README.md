@@ -41,8 +41,10 @@ TEL_LUCIA=+34XXXXXXXXX
 TEL_MANUEL=+34XXXXXXXXX
 ```
 
-En formato internacional y sin espacios. Si falta alguno, el bloque CONTACTO no
-se renderiza y el build lo avisa por consola, en lugar de fallar.
+En formato internacional y sin espacios. Si falta alguno **el build falla a
+propósito**: el bloque CONTACTO es contenido esencial, así que preferimos que un
+despliegue mal configurado se caiga y deje en pie la versión anterior, antes que
+publicar la invitación sin forma de contactar.
 
 En CI los mismos valores llegan desde los secretos del repositorio (Settings >
 Secrets and variables > Actions, con esos dos nombres); el workflow escribe el

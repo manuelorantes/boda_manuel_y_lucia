@@ -10,19 +10,27 @@ const MAPA = 'https://maps.app.goo.gl/KQpEZoszp1jsFZWA9';
 // publica y cualquiera que mire con calma puede deshacer la codificacion.
 const ofuscar = (tel: string) => btoa([...tel.trim()].reverse().join(''));
 
-const contactos = [
-  { nombre: 'Lucía', telefono: import.meta.env.TEL_LUCIA },
-  { nombre: 'Manuel', telefono: import.meta.env.TEL_MANUEL },
-]
-  .filter((c) => Boolean(c.telefono))
-  .map((c) => ({ nombre: c.nombre, codigo: ofuscar(c.telefono as string) }));
+const definidos = [
+  { nombre: 'Lucía', variable: 'TEL_LUCIA', telefono: import.meta.env.TEL_LUCIA },
+  { nombre: 'Manuel', variable: 'TEL_MANUEL', telefono: import.meta.env.TEL_MANUEL },
+];
 
-if (contactos.length === 0) {
-  console.warn(
-    '[Informacion] Faltan TEL_LUCIA / TEL_MANUEL: el bloque CONTACTO se omite. ' +
-      'Crea un .env local o define los secretos del repositorio en Actions.',
+// El bloque CONTACTO es contenido esencial de la invitacion: si faltan los
+// telefonos se corta el build a proposito. Asi un despliegue mal configurado
+// falla y deja en pie la version anterior, en vez de publicar la web sin
+// forma de contactar con nosotros.
+const faltan = definidos.filter((c) => !c.telefono).map((c) => c.variable);
+if (faltan.length > 0) {
+  throw new Error(
+    `[Informacion] Faltan ${faltan.join(' y ')}. Crea un .env local ` +
+      '(ver README) o define los secretos del repositorio en Actions.',
   );
 }
+
+const contactos = definidos.map((c) => ({
+  nombre: c.nombre,
+  codigo: ofuscar(c.telefono as string),
+}));
 ---
 
 <section class="info">
@@ -52,27 +60,24 @@ if (contactos.length === 0) {
     <p class="dato">Etiqueta</p>
   </div>
 
-  {
-    contactos.length > 0 && (
-      <div class="bloque">
-        <h2>CONTACTO</h2>
-        <div class="contactos">
-          {contactos.map((c) => (
-            <a class="contacto" data-tel={c.codigo} aria-label={`Llamar a ${c.nombre}`}>
-              <span>{c.nombre}</span>
-              <span class="numero">··· ··· ···</span>
-            </a>
-          ))}
-        </div>
-        <noscript>
-          <p class="detalle sin-js">
-            Activa JavaScript para ver los teléfonos, o escríbenos desde el formulario de
-            confirmación.
-          </p>
-        </noscript>
-      </div>
-    )
-  }
+  <div class="bloque">
+    <h2>CONTACTO</h2>
+    <div class="contactos">
+      {
+        contactos.map((c) => (
+          <a class="contacto" data-tel={c.codigo} aria-label={`Llamar a ${c.nombre}`}>
+            <span>{c.nombre}</span>
+            <span class="numero">··· ··· ···</span>
+          </a>
+        ))
+      }
+    </div>
+    <noscript>
+      <p class="detalle sin-js">
+        Activa JavaScript para ver los teléfonos, o escríbenos desde el formulario de confirmación.
+      </p>
+    </noscript>
+  </div>
 </section>
 
 <script>

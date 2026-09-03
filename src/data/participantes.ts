@@ -22,8 +22,12 @@ export interface Participante {
 }
 
 export const PARTICIPANTES: Participante[] = [
-  { foto: 'abuela', nombre: 'Eloisa DEP ⭐', descripcion: '¡Que croquetas hacía!' },
-  { foto: 'abuelo', nombre: 'Manuel DEP ⭐', descripcion: 'Cuidaba las plantas mejor que tú' },
+  { foto: 'abuela', nombre: 'Abuela Eloisa DEP ⭐', descripcion: '¡Que croquetas hacía!' },
+  {
+    foto: 'abuelo',
+    nombre: 'Abuelo Manolo DEP ⭐',
+    descripcion: 'Cuidaba las plantas mejor que tú',
+  },
   {
     foto: 'ale_josetxu',
     nombre: 'Ale y Josetxu',

@@ -1,0 +1,710 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import { HUECOS } from '../data/pokedex';
+
+const fotos = import.meta.glob<{ default: ImageMetadata }>('../assets/*.jpg', { eager: true });
+
+const huecos = HUECOS.map((h) => {
+  const modulo = fotos[`../assets/${h.foto}.jpg`];
+  if (!modulo) {
+    throw new Error(
+      `[Pokedex] Falta src/assets/${h.foto}.jpg, referenciada desde src/data/pokedex.ts.`,
+    );
+  }
+  return { ...h, imagen: modulo.default };
+});
+---
+
+<section class="vista pokedex" data-vista="pokedex" hidden>
+  <div class="marco-exterior"></div>
+  <div class="marco-interior"></div>
+
+  <div class="barra">
+    <a class="volver" href="#" data-ir-a="invitacion">← Volver</a>
+    <span class="firma">LUCÍA &amp; MANUEL</span>
+  </div>
+
+  <div class="titulo">
+    <h2>Tu Pokédex</h2>
+    <p class="subtitulo">¡Hazte con todos!</p>
+  </div>
+
+  <div class="sesion" data-sesion hidden>
+    <span class="inicial" data-inicial></span>
+    <span class="nombre-usuario" data-nombre></span>
+    <button class="salir" type="button" data-salir>Salir</button>
+  </div>
+
+  <div class="normas">
+    <p class="epigrafe">LAS NORMAS</p>
+    <p class="texto-normas">
+      Ve por la boda haciéndote fotos con todos los que puedas, ¡cada persona que atrapes suma! El
+      que consiga más "Pokémons" ganará un premio muy especial.
+    </p>
+    <p class="texto-normas suave">Pulsa una silueta para subir tu foto con esa persona.</p>
+  </div>
+
+  <div class="progreso">
+    <div class="cabecera-progreso">
+      <span class="epigrafe">PROGRESO</span>
+      <span data-contador>0 / {huecos.length}</span>
+    </div>
+    <div class="barra-progreso"><div data-barra></div></div>
+  </div>
+
+  <div class="rejilla">
+    {
+      huecos.map((h) => (
+        <div class="hueco" data-hueco={h.n} data-persona={h.nombre}>
+          <button class="marco-foto" type="button" aria-label={`Subir tu foto con ${h.nombre}`}>
+            <Image class="objetivo" src={h.imagen} alt="" width={400} loading="lazy" />
+            <img class="capturada" alt="" hidden />
+            <span class="capa">
+              <span class="accion">SUBIR FOTO</span>
+            </span>
+            <span class="marca">✓</span>
+            <span class="estado" data-estado hidden />
+          </button>
+          <input type="file" accept="image/*" capture="environment" hidden />
+          <p class="quien">{h.nombre}</p>
+        </div>
+      ))
+    }
+  </div>
+
+  <p class="aviso" data-aviso hidden></p>
+
+  <div class="pie-vista">
+    <a class="boton-solido" href="#" data-ir-a="invitacion">Volver a la invitación</a>
+  </div>
+</section>
+
+{/* Panel de identificacion: solo aparece al tocar un hueco por primera vez */}
+<div class="capa-login" data-login hidden>
+  <div class="tarjeta-login" role="dialog" aria-modal="true" aria-label="Identifícate">
+    <div class="marco-tarjeta"></div>
+    <h3>Identifícate</h3>
+    <p class="motivo">
+      La Pokédex guarda tus capturas y las envía a tu nombre. Entra con Google para que no se
+      pierdan y podamos saber quién ha atrapado más.
+    </p>
+    <div class="boton-google" data-boton-google></div>
+    <p class="letra-pequena">
+      Solo guardamos tu nombre, nunca tu correo. Confirmar tu asistencia y ver el resto de la
+      invitación no requiere identificarse.
+    </p>
+    <button class="cerrar-login" type="button" data-cerrar-login>Ahora no</button>
+  </div>
+</div>
+
+<style>
+  .pokedex {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 100vh;
+    padding: 22px 18px 40px;
+  }
+
+  .marco-exterior,
+  .marco-interior {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .marco-exterior {
+    inset: 10px;
+    border: 1.5px solid var(--dorado);
+  }
+
+  .marco-interior {
+    inset: 15px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+  }
+
+  .barra {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 10px 0;
+  }
+
+  .volver {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 6px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .firma {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--dorado);
+  }
+
+  .titulo {
+    position: relative;
+    text-align: center;
+  }
+
+  .titulo h2 {
+    margin: 0;
+    font-family: var(--script);
+    font-size: 40px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
+  .subtitulo {
+    margin: 8px 0 0;
+    font-size: 15px;
+    color: var(--texto-suave);
+  }
+
+  .sesion {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 10px;
+    padding: 8px 12px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+  }
+
+  .inicial {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+    font-size: 15px;
+  }
+
+  .nombre-usuario {
+    flex: 1;
+    font-size: 16px;
+  }
+
+  .salir {
+    border: none;
+    background: transparent;
+    color: var(--dorado-oscuro);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .normas {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 10px;
+    text-align: center;
+  }
+
+  .epigrafe {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    color: var(--dorado-oscuro);
+  }
+
+  .texto-normas {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--texto-suave);
+    text-wrap: pretty;
+  }
+
+  .texto-normas.suave {
+    font-size: 15px;
+    color: var(--dorado-oscuro);
+  }
+
+  .progreso {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .cabecera-progreso {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 15px;
+    color: var(--dorado-oscuro);
+  }
+
+  .barra-progreso {
+    height: 4px;
+    border: 0.5px solid var(--dorado);
+  }
+
+  .barra-progreso div {
+    width: 0;
+    height: 100%;
+    background: var(--dorado-oscuro);
+    transition: width 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .rejilla {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 12px;
+    padding: 0 10px;
+  }
+
+  .hueco {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .marco-foto {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 1px solid var(--dorado);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .marco-foto :global(img),
+  .capturada {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+
+  /* La silueta: se ve a quien hay que atrapar, pero apagado. */
+  .marco-foto :global(.objetivo) {
+    filter: grayscale(1) contrast(0.75) brightness(1.1);
+    opacity: 0.55;
+  }
+
+  .capa {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 8px;
+    background: linear-gradient(to top, rgba(163, 121, 42, 0.35), transparent 55%);
+  }
+
+  .accion {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--pergamino-claro);
+    text-shadow: 0 1px 2px rgba(74, 52, 22, 0.6);
+  }
+
+  .marca {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+    font-size: 15px;
+  }
+
+  .estado {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    left: 4px;
+    padding: 3px 0;
+    background: rgba(247, 240, 222, 0.92);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-align: center;
+    color: var(--dorado-oscuro);
+  }
+
+  /* Estados del hueco, gobernados desde el script con data-estado-hueco */
+  .hueco:not([data-estado-hueco='lleno']) .capturada,
+  .hueco:not([data-estado-hueco='lleno']) .marca {
+    display: none;
+  }
+
+  .hueco[data-estado-hueco='lleno'] .capa,
+  .hueco[data-estado-hueco='lleno'] :global(.objetivo) {
+    display: none;
+  }
+
+  .hueco[data-estado-hueco='subiendo'] .marco-foto {
+    opacity: 0.6;
+  }
+
+  .quien {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.3;
+    text-align: center;
+    color: var(--texto-suave);
+  }
+
+  .aviso {
+    position: relative;
+    margin: 0;
+    padding: 10px 12px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+    background: rgba(255, 250, 238, 0.55);
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  .pie-vista {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-top: 6px;
+  }
+
+  .boton-solido {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0 28px;
+    border: 1px solid var(--dorado-oscuro);
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .boton-solido:hover {
+    color: var(--sobre-dorado);
+  }
+
+  /* --- Panel de identificacion --- */
+
+  .capa-login {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(74, 52, 22, 0.45);
+  }
+
+  .tarjeta-login {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    padding: 30px 24px 24px;
+    border: 1.5px solid var(--dorado);
+    background: rgba(247, 240, 222, 0.96);
+    box-shadow: 0 20px 60px rgba(40, 25, 5, 0.35);
+    text-align: center;
+  }
+
+  .marco-tarjeta {
+    position: absolute;
+    inset: 4px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+    pointer-events: none;
+  }
+
+  .tarjeta-login h3 {
+    position: relative;
+    margin: 0;
+    font-family: var(--script);
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
+  .motivo,
+  .letra-pequena {
+    position: relative;
+    margin: 12px 0 0;
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+
+  .motivo {
+    font-size: 16px;
+    color: var(--texto-suave);
+  }
+
+  .letra-pequena {
+    font-size: 13px;
+    color: var(--texto-suave);
+  }
+
+  .boton-google {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    min-height: 44px;
+    margin-top: 18px;
+  }
+
+  .cerrar-login {
+    position: relative;
+    min-height: 44px;
+    margin-top: 14px;
+    padding: 0 18px;
+    border: 1px solid var(--dorado);
+    background: transparent;
+    color: var(--dorado-oscuro);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .barra-progreso div {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  import {
+    cargarCapturas,
+    cerrarSesion,
+    descargarFoto,
+    identificarse,
+    prepararFoto,
+    subirFoto,
+    usuarioGuardado,
+    type Usuario,
+  } from '../lib/pokedex';
+
+  const CLAVE_FOTOS = 'lm-pokedex';
+
+  const seccion = document.querySelector<HTMLElement>('.pokedex');
+  const panelLogin = document.querySelector<HTMLElement>('[data-login]');
+
+  if (seccion && panelLogin) {
+    // Copia ya comprobada: dentro de una declaracion de funcion TypeScript no
+    // conserva que panelLogin no sea null, porque podria llamarse desde fuera.
+    const capaLogin = panelLogin;
+
+    type Guardada = { dataUrl: string; ficheroId?: string };
+
+    const huecos = [...seccion.querySelectorAll<HTMLElement>('.hueco')];
+    const contador = seccion.querySelector<HTMLElement>('[data-contador]');
+    const barra = seccion.querySelector<HTMLElement>('[data-barra]');
+    const aviso = seccion.querySelector<HTMLElement>('[data-aviso]');
+    const sesion = seccion.querySelector<HTMLElement>('[data-sesion]');
+
+    let usuario: Usuario | null = usuarioGuardado();
+    let fotos: Record<string, Guardada> = leerFotos();
+
+    function leerFotos(): Record<string, Guardada> {
+      try {
+        return JSON.parse(localStorage.getItem(CLAVE_FOTOS) || '{}');
+      } catch {
+        return {};
+      }
+    }
+
+    function guardarFotos() {
+      try {
+        localStorage.setItem(CLAVE_FOTOS, JSON.stringify(fotos));
+      } catch {
+        // El almacenamiento tiene un tope de unos 5 MB. Si se llena, la foto
+        // ya esta en Drive: se pierde la copia local, no la captura.
+      }
+    }
+
+    function mostrarAviso(texto: string) {
+      if (!aviso) return;
+      aviso.textContent = texto;
+      aviso.hidden = !texto;
+    }
+
+    function pintarSesion() {
+      if (!sesion) return;
+      sesion.hidden = !usuario;
+      if (!usuario) return;
+      const inicial = sesion.querySelector<HTMLElement>('[data-inicial]');
+      const nombre = sesion.querySelector<HTMLElement>('[data-nombre]');
+      if (inicial) inicial.textContent = usuario.nombre.trim().charAt(0).toUpperCase();
+      if (nombre) nombre.textContent = usuario.nombre;
+    }
+
+    function pintar() {
+      let llenos = 0;
+
+      huecos.forEach((hueco) => {
+        const n = hueco.dataset.hueco!;
+        const guardada = fotos[n];
+        const imagen = hueco.querySelector<HTMLImageElement>('.capturada');
+        const estado = hueco.querySelector<HTMLElement>('[data-estado]');
+
+        if (guardada) {
+          llenos++;
+          if (imagen && guardada.dataUrl) imagen.src = guardada.dataUrl;
+          hueco.dataset.estadoHueco = 'lleno';
+          // Sin ficheroId, la foto esta en el movil pero no ha llegado a Drive.
+          if (estado) {
+            const pendiente = !guardada.ficheroId;
+            estado.hidden = !pendiente;
+            estado.textContent = pendiente ? 'SIN ENVIAR' : '';
+          }
+        } else {
+          hueco.dataset.estadoHueco = 'vacio';
+          if (estado) estado.hidden = true;
+        }
+      });
+
+      if (contador) contador.textContent = `${llenos} / ${huecos.length}`;
+      if (barra) barra.style.width = `${(llenos / huecos.length) * 100}%`;
+
+      const pendientes = Object.values(fotos).filter((f) => !f.ficheroId).length;
+      mostrarAviso(
+        pendientes
+          ? `${pendientes} ${pendientes === 1 ? 'foto sigue' : 'fotos siguen'} sin enviar. Se reintenta solo cuando vuelvas a esta pantalla con cobertura.`
+          : '',
+      );
+    }
+
+    async function pedirLogin(): Promise<Usuario> {
+      capaLogin.hidden = false;
+      const destino = capaLogin.querySelector<HTMLElement>('[data-boton-google]')!;
+
+      const nuevo = await identificarse(destino);
+      usuario = nuevo;
+      capaLogin.hidden = true;
+      pintarSesion();
+      void sincronizar();
+      return nuevo;
+    }
+
+    /** Trae de Drive lo que este invitado ya tenia, y reintenta lo pendiente. */
+    async function sincronizar() {
+      if (!usuario) return;
+
+      try {
+        const { capturas } = await cargarCapturas(usuario);
+
+        for (const captura of capturas) {
+          const clave = String(captura.hueco);
+          if (fotos[clave]?.ficheroId) continue;
+
+          // Sin copia local: viene de otro movil, hay que traerse la imagen.
+          if (!fotos[clave]) {
+            const { dataUrl } = await descargarFoto(usuario, captura.ficheroId);
+            fotos[clave] = { dataUrl, ficheroId: captura.ficheroId };
+          } else {
+            fotos[clave].ficheroId = captura.ficheroId;
+          }
+        }
+
+        guardarFotos();
+        pintar();
+      } catch {
+        mostrarAviso('No hemos podido recuperar tus capturas. Inténtalo con más cobertura.');
+        return;
+      }
+
+      // Lo que sigue sin ficheroId es que no llego a subirse.
+      for (const [clave, guardada] of Object.entries(fotos)) {
+        if (guardada.ficheroId) continue;
+        const hueco = huecos.find((h) => h.dataset.hueco === clave);
+        await enviar(Number(clave), hueco?.dataset.persona || '', guardada.dataUrl);
+      }
+    }
+
+    async function enviar(n: number, persona: string, dataUrl: string) {
+      if (!usuario) return;
+      const hueco = huecos.find((h) => h.dataset.hueco === String(n));
+      if (hueco) hueco.dataset.estadoHueco = 'subiendo';
+
+      try {
+        const { ficheroId } = await subirFoto(usuario, n, persona, dataUrl);
+        fotos[String(n)] = { dataUrl, ficheroId };
+      } catch {
+        // Se queda en el movil y se reintenta al volver a entrar.
+        fotos[String(n)] = { dataUrl };
+      }
+
+      guardarFotos();
+      pintar();
+    }
+
+    huecos.forEach((hueco) => {
+      const boton = hueco.querySelector<HTMLButtonElement>('.marco-foto')!;
+      const entrada = hueco.querySelector<HTMLInputElement>('input[type=file]')!;
+
+      boton.addEventListener('click', () => {
+        // Aqui esta la decision: el login salta al tocar, no al entrar.
+        if (!usuario) {
+          void pedirLogin();
+          return;
+        }
+        entrada.click();
+      });
+
+      entrada.addEventListener('change', async () => {
+        const fichero = entrada.files?.[0];
+        entrada.value = '';
+        if (!fichero) return;
+
+        const n = Number(hueco.dataset.hueco);
+        const persona = hueco.dataset.persona || '';
+
+        try {
+          const dataUrl = await prepararFoto(fichero);
+          fotos[String(n)] = { dataUrl };
+          guardarFotos();
+          pintar();
+          await enviar(n, persona, dataUrl);
+        } catch {
+          mostrarAviso('No hemos podido leer esa foto. Prueba con otra.');
+        }
+      });
+    });
+
+    seccion.querySelector<HTMLButtonElement>('[data-salir]')?.addEventListener('click', () => {
+      cerrarSesion();
+      usuario = null;
+      pintarSesion();
+    });
+
+    capaLogin.querySelector<HTMLButtonElement>('[data-cerrar-login]')?.addEventListener('click', () => {
+      capaLogin.hidden = true;
+    });
+
+    pintarSesion();
+    pintar();
+    if (usuario) void sincronizar();
+  }
+</script>

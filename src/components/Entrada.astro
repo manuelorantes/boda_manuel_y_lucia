@@ -5,6 +5,9 @@ import Confirmacion from './Confirmacion.astro';
 import Pie from './Pie.astro';
 import Historia from './Historia.astro';
 import Participantes from './Participantes.astro';
+import Pokedex from './Pokedex.astro';
+import Gimnasios from './Gimnasios.astro';
+import Album from './Album.astro';
 
 interface Props {
   /** Texto del titulo script de la portada. */
@@ -26,6 +29,9 @@ const { titulo, variante } = Astro.props;
 
 <Historia />
 <Participantes />
+<Pokedex />
+<Gimnasios />
+<Album />
 
 <noscript>
   <!--
@@ -43,7 +49,14 @@ const { titulo, variante } = Astro.props;
   // Las vistas se turnan en el sitio, sin recargar, igual que en el diseno.
   // El hash mantiene el boton "atras" del movil util y hace enlazables las
   // pantallas: /#historia entra directamente en ella.
-  const VISTAS = ['invitacion', 'historia', 'participantes'] as const;
+  const VISTAS = [
+    'invitacion',
+    'historia',
+    'participantes',
+    'pokedex',
+    'gimnasios',
+    'album',
+  ] as const;
   type Vista = (typeof VISTAS)[number];
 
   const secciones = new Map<Vista, HTMLElement>();

@@ -1,0 +1,260 @@
+---
+import { ALBUM_URL } from '../config';
+---
+
+<section class="vista album" data-vista="album" hidden>
+  <div class="marco-exterior"></div>
+  <div class="marco-interior"></div>
+
+  <div class="barra">
+    <a class="volver" href="#" data-ir-a="invitacion">← Volver</a>
+    <span class="firma">LUCÍA &amp; MANUEL</span>
+  </div>
+
+  <div class="titulo">
+    <h2>Vuestras fotos</h2>
+    <p class="subtitulo">El álbum compartido de la boda</p>
+  </div>
+
+  <div class="tarjeta">
+    <div class="marco-tarjeta"></div>
+    <p class="texto">
+      Sube aquí todas las fotos y vídeos que hagas durante el día. Así nos quedamos con la boda
+      vista desde todos vuestros ojos.
+    </p>
+
+    {
+      ALBUM_URL ? (
+        <a class="boton-solido" href={ALBUM_URL} target="_blank" rel="noopener">
+          Abrir el álbum
+        </a>
+      ) : (
+        <p class="pendiente">El álbum se abrirá aquí unos días antes de la boda.</p>
+      )
+    }
+
+    <p class="letra-pequena">
+      Se abre en Google Fotos. No necesitas cuenta para ver; para subir, entra con la tuya.
+    </p>
+  </div>
+
+  <div class="divisor"><i></i></div>
+
+  <div class="pasos">
+    <p class="epigrafe">CÓMO FUNCIONA</p>
+    <ol>
+      <li><span class="numero">1</span><span>Abre el álbum y pulsa «Añadir fotos».</span></li>
+      <li><span class="numero">2</span><span>Sube tantas como quieras, también los vídeos.</span></li>
+      <li>
+        <span class="numero">3</span>
+        <span>Guarda esta página: después de la boda publicaremos aquí nuestra selección.</span>
+      </li>
+    </ol>
+  </div>
+
+  <div class="pie-vista">
+    <a class="boton-linea" href="#" data-ir-a="invitacion">Volver a la invitación</a>
+  </div>
+</section>
+
+<style>
+  .album {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 100vh;
+    padding: 22px 18px 40px;
+  }
+
+  .marco-exterior,
+  .marco-interior {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .marco-exterior {
+    inset: 10px;
+    border: 1.5px solid var(--dorado);
+  }
+
+  .marco-interior {
+    inset: 15px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+  }
+
+  .barra {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 10px 0;
+  }
+
+  .volver {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 6px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .firma {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--dorado);
+  }
+
+  .titulo {
+    position: relative;
+    text-align: center;
+  }
+
+  .titulo h2 {
+    margin: 0;
+    font-family: var(--script);
+    font-size: 40px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
+  .subtitulo {
+    margin: 8px 0 0;
+    font-size: 15px;
+    color: var(--texto-suave);
+  }
+
+  .tarjeta {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 0 10px;
+    padding: 26px 20px 24px;
+    border: 1.5px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.55);
+    text-align: center;
+  }
+
+  .marco-tarjeta {
+    position: absolute;
+    inset: 4px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+    pointer-events: none;
+  }
+
+  .texto,
+  .letra-pequena,
+  .pendiente {
+    position: relative;
+    margin: 0;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .texto {
+    font-size: 17px;
+  }
+
+  .letra-pequena {
+    font-size: 13px;
+    color: var(--texto-suave);
+  }
+
+  .pendiente {
+    padding: 14px 0;
+    border: 0.5px dashed var(--dorado);
+    font-size: 15px;
+    color: var(--dorado-oscuro);
+  }
+
+  .boton-solido {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    border: 1px solid var(--dorado-oscuro);
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .boton-solido:hover {
+    color: var(--sobre-dorado);
+  }
+
+  .divisor {
+    position: relative;
+    padding: 0 10px;
+  }
+
+  .pasos {
+    position: relative;
+    padding: 0 10px;
+  }
+
+  .epigrafe {
+    margin: 0 0 10px;
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    text-align: center;
+    color: var(--dorado-oscuro);
+  }
+
+  .pasos ol {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pasos li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    line-height: 1.35;
+    color: var(--texto-suave);
+  }
+
+  .numero {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--dorado);
+    border-radius: 50%;
+    font-size: 14px;
+    color: var(--dorado-oscuro);
+  }
+
+  .pie-vista {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-top: 6px;
+  }
+
+  .boton-linea {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0 28px;
+    border: 1px solid var(--dorado);
+    color: var(--dorado-oscuro);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+</style>

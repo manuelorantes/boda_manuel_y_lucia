@@ -10,6 +10,9 @@ const modulos = import.meta.glob<{ default: ImageMetadata }>('../assets/comic.pn
   eager: true,
 });
 const comic = Object.values(modulos)[0]?.default;
+
+/** Identificador del video de la pedida en YouTube (subido como no listado). */
+const VIDEO_PEDIDA = '_tIOM2qpBmw';
 ---
 
 <section class="vista historia" data-vista="historia" hidden>
@@ -45,11 +48,26 @@ const comic = Object.values(modulos)[0]?.default;
       en las estrofas de una canción.
     </p>
 
-    <!-- PENDIENTE: sustituir por el iframe del video cuando haya enlace. -->
-    <div class="video">
+    <!--
+      Caratula falsa: el iframe de YouTube no se carga hasta que alguien pulsa.
+      Asi la pantalla no arrastra el peso del reproductor ni sus cookies solo
+      por entrar, que en movil se nota.
+    -->
+    <button
+      class="video"
+      type="button"
+      data-video={VIDEO_PEDIDA}
+      aria-label="Reproducir el vídeo de la pedida"
+    >
       <span class="play"></span>
       <span class="pie-video">VÍDEO DE LA PEDIDA</span>
-    </div>
+    </button>
+
+    <noscript>
+      <a class="boton" href={`https://youtu.be/${VIDEO_PEDIDA}`} target="_blank" rel="noopener">
+        Ver el vídeo en YouTube
+      </a>
+    </noscript>
 
     <a class="boton" href="#" data-ir-a="participantes">¡Conoce a los que participaron!</a>
   </div>
@@ -227,8 +245,22 @@ const comic = Object.values(modulos)[0]?.default;
     justify-content: center;
     width: 100%;
     aspect-ratio: 16 / 9;
+    padding: 0;
     border: 1px solid var(--dorado);
     background: var(--verde-oscuro);
+    box-shadow: 0 8px 30px rgba(90, 60, 20, 0.18);
+    cursor: pointer;
+  }
+
+  /*
+    El iframe lo crea el script al pulsar, asi que no lleva el atributo de
+    ambito que Astro anade en el build: sin :global no le llegaria el estilo.
+  */
+  :global(.reproductor-pedida) {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--dorado);
     box-shadow: 0 8px 30px rgba(90, 60, 20, 0.18);
   }
 
@@ -381,6 +413,26 @@ const comic = Object.values(modulos)[0]?.default;
 </style>
 
 <script>
+  // La caratula se sustituye por el reproductor al primer clic. youtube-nocookie
+  // evita las cookies de seguimiento, y autoplay arranca el video para que el
+  // clic no haya que darlo dos veces.
+  document.querySelectorAll<HTMLButtonElement>('[data-video]').forEach((caratula) => {
+    caratula.addEventListener('click', () => {
+      const id = caratula.dataset.video;
+      if (!id) return;
+
+      const marco = document.createElement('iframe');
+      marco.className = 'reproductor-pedida';
+      marco.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+      marco.title = 'Vídeo de la pedida';
+      marco.allow =
+        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      marco.allowFullscreen = true;
+
+      caratula.replaceWith(marco);
+    });
+  });
+
   // El modal de la estrofa se abre sobre la pantalla de historia. Vive aparte
   // del cambio de vistas porque no navega: solo se superpone.
   const capa = document.querySelector<HTMLElement>('[data-estrofa]');

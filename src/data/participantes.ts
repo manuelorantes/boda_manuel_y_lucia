@@ -19,6 +19,12 @@ export interface Participante {
   nombre: string;
   /** La pista que se revela al pulsar "Pista". */
   descripcion: string;
+  /**
+   * De donde se recorta el cuadro cuando la foto no es cuadrada. Por defecto
+   * se recorta del centro, que va bien casi siempre; "arriba" salva las fotos
+   * verticales en las que las caras quedan pegadas al borde superior.
+   */
+  encuadre?: 'arriba' | 'centro' | 'abajo';
 }
 
 export const PARTICIPANTES: Participante[] = [
@@ -76,7 +82,7 @@ export const PARTICIPANTES: Participante[] = [
   },
   {
     foto: 'estrella_cipri_samuel',
-    nombre: 'Estrella, Cipri y Samuel',
+    nombre: 'Samuel, Estrella y Cipri',
     descripcion: 'Igual te traen jamón, igual te esperan tras Japón',
   },
   { foto: 'francisco', nombre: 'Francisco', descripcion: 'Alma libre y arrolladora' },
@@ -98,7 +104,7 @@ export const PARTICIPANTES: Participante[] = [
   { foto: 'juanma_sonia', nombre: 'Juanma y Sonia', descripcion: 'Familia adoptiva' },
   {
     foto: 'julian_rosa_julian_sofia',
-    nombre: 'Julian, Rosa, Julian y Sofía',
+    nombre: 'Sofía, Julian, Julian y Rosa',
     descripcion: 'Médicos sin fronteras',
   },
   {
@@ -118,7 +124,13 @@ export const PARTICIPANTES: Participante[] = [
     nombre: 'Manuel y Kiara DEP ⭐',
     descripcion: 'El novio y patapollo',
   },
-  { foto: 'marcos_andrea', nombre: 'Marcos y Andrea', descripcion: 'Son los siguientes' },
+  {
+    foto: 'marcos_andrea',
+    nombre: 'Andrea y Marcos',
+    descripcion: 'Son los siguientes',
+    // Las dos caras estan pegadas al borde superior: centrado les corta la frente.
+    encuadre: 'arriba',
+  },
   { foto: 'maria', nombre: 'María', descripcion: 'Representando a la Familia Orantes' },
   {
     foto: 'mariangeles',

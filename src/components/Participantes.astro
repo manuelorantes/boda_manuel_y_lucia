@@ -16,6 +16,9 @@ const fichas = PARTICIPANTES.map((p) => {
   }
   return { ...p, imagen: modulo.default };
 });
+
+/** De donde tira el recorte cuadrado cuando la foto no es cuadrada. */
+const ENCUADRE = { arriba: 'top', centro: 'center', abajo: 'bottom' } as const;
 ---
 
 <section class="vista participantes" data-vista="participantes" hidden>
@@ -41,7 +44,13 @@ const fichas = PARTICIPANTES.map((p) => {
             con lector de pantalla o mire el codigo.
           */}
           <div class="foto">
-            <Image src={f.imagen} alt="Foto de quien participó en el vídeo" width={400} loading="lazy" />
+            <Image
+              src={f.imagen}
+              alt="Foto de quien participó en el vídeo"
+              width={400}
+              loading="lazy"
+              style={f.encuadre ? `object-position: ${ENCUADRE[f.encuadre]}` : undefined}
+            />
           </div>
 
           <button class="pista" type="button" data-revelar>Pista</button>

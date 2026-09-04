@@ -77,6 +77,10 @@ const ENCUADRE = { arriba: 'top', centro: 'center', abajo: 'bottom' } as const;
       <div class="ilustracion">
         <Image src={pokeballs} alt="" width={340} loading="lazy" />
       </div>
+
+      {/* La prueba se juega en la Pokedex: sin este enlace habia que volver
+          a la invitacion para encontrarla. */}
+      <a class="boton-prueba" href="#pokedex" data-ir-a="pokedex">Abrir tu Pokédex</a>
     </div>
   </div>
 
@@ -330,6 +334,26 @@ const ENCUADRE = { arriba: 'top', centro: 'center', abajo: 'bottom' } as const;
     width: 170px;
     height: auto;
     mix-blend-mode: multiply;
+  }
+
+  /* De linea y no solido: el boton solido de abajo es el que cierra la
+     pantalla, y dos macizos seguidos se estorbarian. */
+  .boton-prueba {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    margin-top: 4px;
+    border: 1px solid var(--dorado);
+    color: var(--dorado-oscuro);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .boton-prueba:hover {
+    background: rgba(163, 121, 42, 0.08);
+    color: var(--dorado-oscuro);
   }
 
   .pie-vista {

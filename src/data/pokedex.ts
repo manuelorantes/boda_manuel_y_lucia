@@ -17,6 +17,15 @@ export interface Hueco {
   foto: string;
   /** A quien hay que atrapar. */
   nombre: string;
+  /**
+   * Como encaja la foto en el cuadro de la silueta.
+   *
+   * Por defecto se recorta del centro, que va bien casi siempre. "arriba"
+   * salva las verticales con las caras pegadas al borde superior, y
+   * "completa" encaja la foto entera sin recortar: es para las de grupo
+   * apaisadas, donde el recorte se lleva por delante a los de los extremos.
+   */
+  encuadre?: 'arriba' | 'centro' | 'abajo' | 'completa';
 }
 
 export const HUECOS: Hueco[] = [
@@ -28,7 +37,13 @@ export const HUECOS: Hueco[] = [
   { n: 6, foto: 'elvira_aitor_nora', nombre: 'Elvira, Aitor y Nora' },
   { n: 7, foto: 'estrella_cipri_samuel', nombre: 'Samuel, Estrella y Cipri' },
   { n: 8, foto: 'francisco', nombre: 'Francisco' },
-  { n: 9, foto: 'ildefonso_victoria_jose_luis_ada_moka', nombre: 'Ildefonso, Victoria y Ada' },
+  {
+    n: 9,
+    foto: 'ildefonso_victoria_jose_luis_ada_moka',
+    nombre: 'Ildefonso, Victoria y Ada',
+    // Grupo apaisado: recortada al cuadro se pierden los de los extremos.
+    encuadre: 'completa',
+  },
   { n: 10, foto: 'irene', nombre: 'Irene' },
   { n: 11, foto: 'johanna', nombre: 'Johanna' },
   { n: 12, foto: 'juanma_sonia', nombre: 'Juanma y Sonia' },
@@ -38,7 +53,13 @@ export const HUECOS: Hueco[] = [
   { n: 16, foto: 'malena_javi_martina', nombre: 'Malena, Javi y Martina' },
   { n: 17, foto: 'manolo', nombre: 'Manolo' },
   { n: 18, foto: 'manuel_kiara', nombre: 'Manuel' },
-  { n: 19, foto: 'marcos_andrea', nombre: 'Andrea y Marcos' },
+  {
+    n: 19,
+    foto: 'marcos_andrea',
+    nombre: 'Andrea y Marcos',
+    // Las dos caras estan pegadas al borde superior de una foto vertical.
+    encuadre: 'arriba',
+  },
   { n: 20, foto: 'maria', nombre: 'María' },
   { n: 21, foto: 'mariangeles', nombre: 'Mª Ángeles' },
   { n: 22, foto: 'nuria_juande', nombre: 'Nuria y Juande' },

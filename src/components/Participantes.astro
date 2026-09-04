@@ -17,8 +17,6 @@ const fichas = PARTICIPANTES.map((p) => {
   return { ...p, imagen: modulo.default };
 });
 
-/** De donde tira el recorte cuadrado cuando la foto no es cuadrada. */
-const ENCUADRE = { arriba: 'top', centro: 'center', abajo: 'bottom' } as const;
 ---
 
 <section class="vista participantes" data-vista="participantes" hidden>
@@ -43,14 +41,8 @@ const ENCUADRE = { arriba: 'top', centro: 'center', abajo: 'bottom' } as const;
             El alt no dice quien es: seria regalar la solucion a quien navegue
             con lector de pantalla o mire el codigo.
           */}
-          <div class="foto">
-            <Image
-              src={f.imagen}
-              alt="Foto de quien participó en el vídeo"
-              width={400}
-              loading="lazy"
-              style={f.encuadre ? `object-position: ${ENCUADRE[f.encuadre]}` : undefined}
-            />
+          <div class="foto" data-encuadre={f.encuadre}>
+            <Image src={f.imagen} alt="Foto de quien participó en el vídeo" width={400} loading="lazy" />
           </div>
 
           <button class="pista" type="button" data-revelar>Pista</button>
@@ -196,6 +188,21 @@ const ENCUADRE = { arriba: 'top', centro: 'center', abajo: 'bottom' } as const;
     height: auto;
     aspect-ratio: 1;
     object-fit: cover;
+  }
+
+  /* Encuadres, segun el campo del fichero de datos. */
+  .foto[data-encuadre='arriba'] :global(img) {
+    object-position: top;
+  }
+
+  .foto[data-encuadre='abajo'] :global(img) {
+    object-position: bottom;
+  }
+
+  /* La foto entera dentro del cuadro, sin recortar: para las de grupo
+     apaisadas, donde el recorte se lleva a los de los extremos. */
+  .foto[data-encuadre='completa'] :global(img) {
+    object-fit: contain;
   }
 
   .pista,

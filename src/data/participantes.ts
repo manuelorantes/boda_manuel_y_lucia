@@ -20,11 +20,13 @@ export interface Participante {
   /** La pista que se revela al pulsar "Pista". */
   descripcion: string;
   /**
-   * De donde se recorta el cuadro cuando la foto no es cuadrada. Por defecto
-   * se recorta del centro, que va bien casi siempre; "arriba" salva las fotos
-   * verticales en las que las caras quedan pegadas al borde superior.
+   * Como encaja la foto en el cuadro. Por defecto se recorta del centro, que
+   * va bien casi siempre; "arriba" salva las verticales en las que las caras
+   * quedan pegadas al borde superior, y "completa" encaja la foto entera sin
+   * recortar, para las de grupo apaisadas donde el recorte se lleva por
+   * delante a los de los extremos.
    */
-  encuadre?: 'arriba' | 'centro' | 'abajo';
+  encuadre?: 'arriba' | 'centro' | 'abajo' | 'completa';
 }
 
 export const PARTICIPANTES: Participante[] = [
@@ -90,6 +92,8 @@ export const PARTICIPANTES: Participante[] = [
     foto: 'ildefonso_victoria_jose_luis_ada_moka',
     nombre: 'Ildefonso, Victoria, José Luis DEP ★, Ada y Moka',
     descripcion: 'Persiguieron a la novia en barco. De Ceuta a Granada',
+    // Grupo apaisado: recortada al cuadro se pierden los de los extremos.
+    encuadre: 'completa',
   },
   {
     foto: 'irene',

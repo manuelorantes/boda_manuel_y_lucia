@@ -56,7 +56,7 @@ const huecos = HUECOS.map((h) => {
   <div class="rejilla">
     {
       huecos.map((h) => (
-        <div class="hueco" data-hueco={h.n} data-persona={h.nombre}>
+        <div class="hueco" data-hueco={h.n} data-persona={h.nombre} data-encuadre={h.encuadre}>
           <button class="marco-foto" type="button" aria-label={`Subir tu foto con ${h.nombre}`}>
             <Image class="objetivo" src={h.imagen} alt="" width={400} loading="lazy" />
             {/*
@@ -312,6 +312,24 @@ const huecos = HUECOS.map((h) => {
   .marco-foto :global(.objetivo) {
     filter: grayscale(1) contrast(0.75) brightness(1.1);
     opacity: 0.55;
+  }
+
+  /*
+    Encuadre de la silueta, segun el campo del fichero de datos. Solo afecta
+    a la silueta: la foto que sube el invitado se recorta siempre centrada.
+  */
+  .hueco[data-encuadre='arriba'] :global(.objetivo) {
+    object-position: top;
+  }
+
+  .hueco[data-encuadre='abajo'] :global(.objetivo) {
+    object-position: bottom;
+  }
+
+  /* Entera dentro del cuadro: en las de grupo apaisadas el recorte se
+     llevaba por delante a los de los extremos. */
+  .hueco[data-encuadre='completa'] :global(.objetivo) {
+    object-fit: contain;
   }
 
   .capa {

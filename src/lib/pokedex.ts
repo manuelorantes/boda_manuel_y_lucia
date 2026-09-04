@@ -261,6 +261,19 @@ export function subirFoto(usuario: Usuario, hueco: number, persona: string, foto
   });
 }
 
+/**
+ * Vacia un hueco. No borra nada de Drive: la foto se queda alli y solo se
+ * anota que el invitado la quito.
+ */
+export function quitarFoto(usuario: Usuario, hueco: number, persona: string) {
+  return llamar<{ ok: true }>({
+    accion: 'quitar',
+    idToken: usuario.idToken,
+    hueco,
+    persona,
+  });
+}
+
 export function cargarCapturas(usuario: Usuario) {
   return llamar<{ ok: true; capturas: Captura[] }>({
     accion: 'cargar',

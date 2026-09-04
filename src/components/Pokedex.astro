@@ -72,8 +72,14 @@ const huecos = HUECOS.map((h) => {
             <span class="marca">✓</span>
             <span class="estado" data-estado hidden />
           </button>
-          <input type="file" accept="image/*" capture="environment" hidden />
+          {/*
+            Sin `capture`: con ese atributo el movil abre la camara directa y
+            no deja elegir una foto que ya tengas. Sin el, el sistema ofrece
+            camara o galeria.
+          */}
+          <input type="file" accept="image/*" hidden />
           <p class="quien">{h.nombre}</p>
+          <button class="quitar" type="button" data-quitar>Quitar</button>
         </div>
       ))
     }
@@ -376,6 +382,22 @@ const huecos = HUECOS.map((h) => {
     color: var(--texto-suave);
   }
 
+  .quitar {
+    min-height: 34px;
+    border: 1px solid rgba(163, 121, 42, 0.55);
+    background: transparent;
+    color: var(--dorado-oscuro);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  /* Solo tiene sentido en un hueco con foto. */
+  .hueco:not([data-estado-hueco='lleno']) .quitar {
+    display: none;
+  }
+
   .aviso {
     position: relative;
     margin: 0;
@@ -508,6 +530,7 @@ const huecos = HUECOS.map((h) => {
     identificarse,
     explicar,
     prepararFoto,
+    quitarFoto,
     subirFoto,
     usuarioGuardado,
     type Usuario,
@@ -690,6 +713,32 @@ const huecos = HUECOS.map((h) => {
           return;
         }
         entrada.click();
+      });
+
+      hueco.querySelector<HTMLButtonElement>('[data-quitar]')?.addEventListener('click', async () => {
+        const n = Number(hueco.dataset.hueco);
+        const persona = hueco.dataset.persona || '';
+        const anterior = fotos[String(n)];
+        if (!anterior) return;
+
+        // Se vacia en pantalla ya, sin esperar al servidor: si falla la red
+        // se deshace. Da sensacion de respuesta inmediata sin mentir.
+        delete fotos[String(n)];
+        guardarFotos();
+        pintar();
+
+        if (!usuario) return;
+
+        try {
+          // El servidor solo anota el hueco vacio; la foto sigue en Drive.
+          await quitarFoto(usuario, n, persona);
+          ultimoFallo = '';
+        } catch (error) {
+          fotos[String(n)] = anterior;
+          guardarFotos();
+          ultimoFallo = explicar(error);
+          pintar();
+        }
       });
 
       entrada.addEventListener('change', async () => {

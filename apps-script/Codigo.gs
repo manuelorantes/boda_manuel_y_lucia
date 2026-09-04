@@ -48,6 +48,8 @@ function doPost(e) {
     switch (peticion.accion) {
       case 'guardar':
         return json(guardar(usuario, peticion));
+      case 'quitar':
+        return json(quitar(usuario, peticion));
       case 'cargar':
         return json({ ok: true, capturas: capturasDe(usuario.sub) });
       case 'foto':
@@ -145,11 +147,13 @@ function guardar(usuario, peticion) {
   if (bytes.length > MAX_BYTES) return { ok: false, error: 'tamano' };
 
   const carpeta = carpetaDe(usuario);
-  const nombreFichero = String(hueco).padStart(2, '0') + ' - ' + persona + '.jpg';
 
-  // Repetir un hueco sustituye la foto anterior, no acumula.
-  const previas = carpeta.getFilesByName(nombreFichero);
-  while (previas.hasNext()) previas.next().setTrashed(true);
+  // El nombre lleva la hora: repetir un hueco NO sustituye a la foto
+  // anterior, se quedan las dos en Drive. Se decidio asi a proposito, para
+  // no perder nunca una foto de la boda aunque el invitado la reemplace.
+  // Cual es la buena lo dice la hoja: manda la ultima fila de cada hueco.
+  const sello = Utilities.formatDate(new Date(), 'Europe/Madrid', 'yyyyMMdd-HHmmss');
+  const nombreFichero = String(hueco).padStart(2, '0') + ' - ' + persona + ' - ' + sello + '.jpg';
 
   const fichero = carpeta.createFile(Utilities.newBlob(bytes, partes[1], nombreFichero));
 
@@ -166,14 +170,45 @@ function guardar(usuario, peticion) {
   return { ok: true, ficheroId: fichero.getId() };
 }
 
-/** Que huecos tiene ya este invitado, para restaurar su progreso. */
+/**
+ * Vacia un hueco.
+ *
+ * NO borra nada de Drive: solo anota que el invitado lo quito, con una fila
+ * sin FicheroID. Como manda la ultima fila de cada hueco, eso lo deja vacio
+ * para la web, y la foto sigue en la carpeta por si hiciera falta.
+ */
+function quitar(usuario, peticion) {
+  const hueco = Number(peticion.hueco);
+  if (!hueco || hueco < 1) return { ok: false, error: 'hueco' };
+
+  hoja().appendRow([
+    new Date(),
+    usuario.sub,
+    usuario.nombre,
+    hueco,
+    String(peticion.persona || '').slice(0, 80),
+    '', // sin FicheroID: es lo que marca que el hueco quedo vacio
+    carpetaDe(usuario).getId(),
+  ]);
+
+  return { ok: true };
+}
+
+/**
+ * Que huecos tiene ya este invitado, para restaurar su progreso.
+ *
+ * Manda la ultima fila de cada hueco: asi un reemplazo devuelve la foto
+ * nueva y un "quitar" deja el hueco fuera de la lista.
+ */
 function capturasDe(sub) {
   const porHueco = {};
   filasDe(sub).forEach((fila) => {
-    // La ultima fila de cada hueco manda: es la foto que quedo en Drive.
     porHueco[fila[3]] = { hueco: fila[3], persona: fila[4], ficheroId: fila[5] };
   });
-  return Object.keys(porHueco).map((k) => porHueco[k]);
+
+  return Object.keys(porHueco)
+    .map((k) => porHueco[k])
+    .filter((c) => c.ficheroId);
 }
 
 /**

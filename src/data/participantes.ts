@@ -151,6 +151,7 @@ export const PARTICIPANTES: Participante[] = [
     foto: 'nuria_juande',
     nombre: 'Nuria y Juande',
     descripcion: 'Prima verdadera y okupas del huerto',
+    encuadre: 'arriba',
   },
   { foto: 'teresa_david', nombre: 'Teresa y David', descripcion: 'En la distancia...' },
   {

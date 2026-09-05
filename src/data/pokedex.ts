@@ -62,37 +62,56 @@ export const HUECOS: Hueco[] = [
   },
   { n: 20, foto: 'maria', nombre: 'María' },
   { n: 21, foto: 'mariangeles', nombre: 'Mª Ángeles' },
-  { n: 22, foto: 'nuria_juande', nombre: 'Nuria y Juande' },
+  {
+    n: 22,
+    foto: 'nuria_juande',
+    nombre: 'Nuria y Juande',
+    // La foto es vertical y las dos caras estan en la mitad de arriba: el
+    // recorte centrado le cortaba la cabeza a Juande.
+    encuadre: 'arriba',
+  },
   { n: 23, foto: 'Zaira', nombre: 'Zaira' },
 ];
 
 /**
- * Los gimnasios: retos del dia. Se marcan a mano y viven solo en el movil del
- * invitado, sin login ni servidor. Si borra los datos del navegador los
- * pierde, y "Campeon de la Liga" se demuestra ensenando el movil.
+ * Los gimnasios: retos del dia.
+ *
+ * Las medallas se marcan a mano y viven solo en el movil del invitado, sin
+ * login: si borra los datos del navegador las pierde, y "Campeon de la Liga"
+ * se demuestra ensenando el movil.
+ *
+ * El BLOQUEO, en cambio, no vive aqui ni en el movil: lo manda el Apps Script
+ * (pestana `Gimnasios` de la hoja) y es igual para todos. Asi los novios
+ * abren un reto desde el panel y les cambia a los ciento y pico invitados a
+ * la vez. Ver src/lib/retos.ts.
  */
 export interface Gimnasio {
   id: string;
   gimnasio: string;
+  /**
+   * Titulo y texto del reto. Los ocho lo tienen aqui, tambien los que nacen
+   * bloqueados: asi la pantalla se lee entera aunque el movil se quede sin
+   * cobertura o el Apps Script no conteste.
+   *
+   * Las columnas `reto` y `descripcion` de la hoja mandan sobre esto cuando
+   * vienen escritas, que es el apano para corregir una errata el mismo dia sin
+   * volver a desplegar la web.
+   */
   reto: string;
-  /** Texto largo del lider del gimnasio, dentro del desplegable. */
   descripcion: string;
   /**
-   * Fichero PNG en src/assets, sin extension. Opcional: los gimnasios
-   * bloqueados no tienen ilustracion, y los que la tienen degradan a solo
-   * texto si la imagen todavia no esta en el repositorio.
+   * Fichero PNG en src/assets, sin extension. Opcional: si la imagen todavia
+   * no esta en el repositorio, la tarjeta se queda con el texto en vez de
+   * romper el build.
    */
   imagen?: string;
   /**
-   * Reto sin anunciar. Se ve en la lista, pero no se puede marcar y no cuenta
-   * para el total: la Liga se completa con los seis abiertos.
+   * Con que estado se pinta antes de que conteste el servidor. Solo es el
+   * punto de partida: quien manda es la hoja, y los novios lo cambian desde
+   * /panel.
    */
-  bloqueado?: boolean;
+  bloqueadoPorDefecto?: boolean;
 }
-
-const POR_DESBLOQUEAR =
-  'Este gimnasio abrirá sus puertas más adelante. Vuelve a consultar la web cuando se acerque el ' +
-  'gran día.';
 
 export const GIMNASIOS: Gimnasio[] = [
   {
@@ -160,19 +179,29 @@ export const GIMNASIOS: Gimnasio[] = [
       'desafío requiere paciencia y una mente fría. ¿Tienes la Inteligencia suficiente para esta ' +
       'medalla?»',
   },
+  // Los dos ultimos nacen bloqueados porque se abren avanzada la fiesta, pero
+  // por lo demas son retos como los otros seis: su texto vive aqui igual.
   {
-    id: 'locked7',
+    id: 'snorlax',
     gimnasio: 'GIMNASIO 7',
-    reto: 'Reto por desbloquear',
-    bloqueado: true,
-    descripcion: POR_DESBLOQUEAR,
+    reto: 'Bayas Mágicas',
+    imagen: 'snorlax',
+    bloqueadoPorDefecto: true,
+    descripcion:
+      '«Llegó el momento de recargar energía con las Bayas de la casa. ¡Snorlax se ha despertado y ' +
+      'el gran festín de galletas ha comenzado! Reta a otro invitado a una competencia amistosa en ' +
+      'el rincón dulce. ¿Quién puede comerse la galleta más rápido sin usar las manos? Demuestra ' +
+      'tu velocidad técnica culinaria con deportividad y que la suerte te acompañe.»',
   },
   {
-    id: 'locked8',
+    id: 'porygon',
     gimnasio: 'GIMNASIO 8',
-    reto: 'Reto por desbloquear',
-    bloqueado: true,
-    descripcion: POR_DESBLOQUEAR,
+    reto: 'Desafío de la Sala Recreativa',
+    imagen: 'porygon',
+    bloqueadoPorDefecto: true,
+    descripcion:
+      '«Reta a otro invitado a una partida rápida en la zona de juego (billar o mesa recreativa). ' +
+      'No hace falta ganar la partida, solo demostrar deportividad y juego limpio en el tapete.»',
   },
 ];
 

@@ -5,12 +5,13 @@ Los invitados llegan escaneando el QR impreso en su entrada.
 
 Hecha con [Astro](https://astro.build), estática, mobile-first, publicada en GitHub Pages.
 
-## Las dos entradas
+## Las páginas
 
 | Ruta | Entrada | Diferencias |
 |---|---|---|
 | `/` | General | — |
 | `/vip` | VIP | El título dice "Entrada VIP" y el formulario añade la pregunta de alojamiento |
+| `/panel` | — | Panel de los novios para abrir y cerrar retos. **No lo enlaza nada** |
 
 La página general **no contiene ninguna referencia al alojamiento**: el paso ni siquiera
 se renderiza en su HTML.
@@ -19,6 +20,12 @@ se renderiza en su HTML.
 > cualquiera que la escriba, y el JS del formulario es compartido entre ambas
 > páginas. Si el contenido VIP debe ser realmente reservado, esta pila no lo
 > protege; haría falta otra solución.
+
+`/panel` es distinto: ahí lo que protege no es la URL sino el Apps Script, que
+solo obedece a la cuenta maestra. Ninguna página de invitado lo enlaza ni lo
+menciona, y en su HTML y su JavaScript no aparecen ni el panel ni la palabra
+"admin". El correo de esa cuenta tampoco está en este repositorio: vive en las
+propiedades del proyecto de Apps Script. Ver `apps-script/README.md`.
 
 ## Desarrollo
 
@@ -78,13 +85,30 @@ src/components/
   Album.astro                álbum compartido de Google Fotos
   Faq.astro                  preguntas frecuentes e IBAN de los regalos
   Pie.astro                  ilustración y firma
+src/pages/panel.astro        panel de los novios (abrir y cerrar retos)
 src/data/pokedex.ts          huecos de la Pokédex, gimnasios y preguntas frecuentes
 src/lib/googleForm.ts        mapeo y envío al Google Form
+src/lib/appsScript.ts        transporte hacia el Apps Script (fotos y retos)
 src/lib/pokedex.ts           identidad y envío de las capturas
+src/lib/retos.ts             qué gimnasios están abiertos (lo manda el servidor)
 src/lib/medallas.ts          medallas de los gimnasios en localStorage
 src/lib/contacto.ts          codificación de teléfonos e IBAN
 src/assets/                  PNG originales (Astro los optimiza a WebP)
 ```
+
+## Los gimnasios
+
+Las **medallas** son de cada móvil (`localStorage`) y no salen de ahí. El
+**bloqueo** de cada reto, en cambio, es compartido: lo manda el Apps Script
+leyendo la pestaña `Gimnasios` de la hoja, y solo la cuenta maestra lo cambia,
+desde `/panel`.
+
+El texto de los ocho retos está en `src/data/pokedex.ts`, también el de los dos
+que nacen bloqueados. Así la pantalla se lee entera aunque no haya cobertura o
+el Apps Script no conteste; el precio es que quien mire este repositorio puede
+leer los dos últimos antes de que se abran. Las columnas `reto` y `descripcion`
+de la hoja mandan sobre esos textos cuando vienen escritas, para poder corregir
+una errata el mismo día sin desplegar. Lo cuenta entero `apps-script/README.md`.
 
 Todas las pantallas viven en la misma página y se turnan sin recargar: la
 navegación está en `Entrada.astro`, y cada vista se enlaza por su hash

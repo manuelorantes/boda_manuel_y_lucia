@@ -1,0 +1,498 @@
+---
+/**
+ * Panel de control de los retos. Solo para la cuenta maestra.
+ *
+ * Vive en su propia pagina y NADA de la invitacion enlaza aqui: ni un boton,
+ * ni la palabra "panel". Un invitado que mire el codigo fuente de la
+ * invitacion no encuentra rastro de que exista una cuenta maestra, que es lo
+ * que se pidio. Se entra escribiendo la direccion a mano.
+ *
+ * Y si alguien acaba dando con la URL, tampoco pasa nada: aqui no se decide
+ * quien manda. Esta pagina pregunta al Apps Script y el Apps Script compara el
+ * correo del token de Google contra el suyo, que no esta ni en este
+ * repositorio ni en el HTML. Sin ese correo, esto es una pantalla vacia.
+ */
+import Layout from '../layouts/Layout.astro';
+import { GIMNASIOS } from '../data/pokedex';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Layout title="Panel · Lucía & Manuel">
+  <section class="panel">
+    <div class="marco-exterior"></div>
+    <div class="marco-interior"></div>
+
+    <div class="barra">
+      <a class="volver" href={`${base}/`}>← A la invitación</a>
+      <span class="firma">LUCÍA &amp; MANUEL</span>
+    </div>
+
+    <div class="titulo">
+      <h1>Panel de control</h1>
+      <p class="subtitulo" data-quien>Los retos de la boda</p>
+    </div>
+
+    {/* Paso 1: identificarse. Es lo unico que se ve al llegar. */}
+    <div class="paso" data-paso="entrar">
+      <p class="explicacion">Entra con la cuenta de los novios para abrir y cerrar retos.</p>
+      <div class="boton-google" data-boton-google></div>
+      <noscript>
+        <p class="explicacion">Esta página necesita JavaScript.</p>
+      </noscript>
+    </div>
+
+    {/* Paso 2: la cuenta no es la maestra. Ni se insinua cual lo es. */}
+    <div class="paso" data-paso="denegado" hidden>
+      <p class="explicacion">Esta cuenta no puede cambiar los retos.</p>
+      <button class="boton-linea" type="button" data-salir>Salir</button>
+    </div>
+
+    {/* Paso 3: el panel de verdad. */}
+    <div class="paso" data-paso="panel" hidden>
+      <p class="explicacion">
+        Activa o desactiva cada reto. El cambio les llega a todos los invitados en cuanto vuelvan a
+        abrir los gimnasios.
+      </p>
+
+      <div class="cabecera-lista">
+        <span class="epigrafe">RETOS</span>
+        <span data-cuenta></span>
+      </div>
+
+      <div class="lista">
+        {
+          GIMNASIOS.map((g) => (
+            <button class="reto" type="button" data-reto={g.id} aria-pressed="false">
+              <span class="texto">
+                <span class="numero">{g.gimnasio}</span>
+                <span class="tarea" data-tarea>{g.reto}</span>
+              </span>
+              <span class="mando">
+                <span class="etiqueta" data-etiqueta>—</span>
+                <span class="interruptor">
+                  <span class="bola" />
+                </span>
+              </span>
+            </button>
+          ))
+        }
+      </div>
+
+      <div class="acciones">
+        <button class="boton-linea" type="button" data-todos="abrir">Activar todos</button>
+        <button class="boton-linea" type="button" data-todos="cerrar">Bloquear todos</button>
+      </div>
+
+      <p class="aviso" data-aviso hidden></p>
+
+      <div class="pie-panel">
+        <a class="boton-solido" href={`${base}/#gimnasios`}>Ver como invitado</a>
+        <button class="boton-linea" type="button" data-salir>Salir</button>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  import { identificarse, usuarioGuardado, cerrarSesion, type Usuario } from '../lib/pokedex';
+  import { explicar } from '../lib/appsScript';
+  import { cargarRetos, cambiarRetos, type EstadoReto } from '../lib/retos';
+
+  const seccion = document.querySelector<HTMLElement>('.panel');
+
+  if (seccion) {
+    const pasos = new Map<string, HTMLElement>();
+    seccion.querySelectorAll<HTMLElement>('[data-paso]').forEach((p) => {
+      pasos.set(p.dataset.paso!, p);
+    });
+
+    const filas = [...seccion.querySelectorAll<HTMLElement>('[data-reto]')];
+    const cuenta = seccion.querySelector<HTMLElement>('[data-cuenta]');
+    const quien = seccion.querySelector<HTMLElement>('[data-quien]');
+    const aviso = seccion.querySelector<HTMLElement>('[data-aviso]');
+
+    let usuario: Usuario | null = usuarioGuardado();
+    let estados: EstadoReto[] = [];
+
+    const mostrar = (paso: string) => {
+      for (const [nombre, elemento] of pasos) elemento.hidden = nombre !== paso;
+    };
+
+    const avisar = (texto: string) => {
+      if (!aviso) return;
+      aviso.textContent = texto;
+      aviso.hidden = !texto;
+    };
+
+    const pintar = () => {
+      const porId = new Map(estados.map((e) => [e.id, e]));
+      let bloqueados = 0;
+
+      filas.forEach((fila) => {
+        const estado = porId.get(fila.dataset.reto!);
+        const cerrado = !!estado?.bloqueado;
+        if (cerrado) bloqueados++;
+
+        fila.setAttribute('aria-pressed', String(!cerrado));
+        const etiqueta = fila.querySelector<HTMLElement>('[data-etiqueta]');
+        if (etiqueta) etiqueta.textContent = cerrado ? 'BLOQUEADO' : 'ACTIVO';
+
+        // Si la hoja trae titulo propio, manda sobre el de la web.
+        const tarea = fila.querySelector<HTMLElement>('[data-tarea]');
+        if (tarea && estado?.reto) tarea.textContent = estado.reto;
+      });
+
+      if (cuenta) {
+        cuenta.textContent = `${filas.length - bloqueados} activos · ${bloqueados} bloqueados`;
+      }
+    };
+
+    /** Manda los cambios y se queda con lo que responda el servidor. */
+    const cambiar = async (cambios: { id: string; bloqueado: boolean }[]) => {
+      if (!usuario) return;
+      avisar('');
+
+      // Se pinta antes de que conteste: el panel se usa de pie en mitad de una
+      // boda y esperar un segundo a cada toque se hace eterno. Si falla, la
+      // respuesta del servidor deshace la mentira.
+      const previo = estados;
+      const porCambio = new Map(cambios.map((c) => [c.id, c.bloqueado]));
+      estados = estados.map((e) =>
+        porCambio.has(e.id) ? { ...e, bloqueado: porCambio.get(e.id)! } : e,
+      );
+      pintar();
+
+      try {
+        const respuesta = await cambiarRetos(usuario, cambios);
+        estados = respuesta.retos;
+      } catch (error) {
+        estados = previo;
+        avisar(explicar(error));
+      }
+
+      pintar();
+    };
+
+    filas.forEach((fila) => {
+      fila.addEventListener('click', () => {
+        const id = fila.dataset.reto!;
+        const actual = estados.find((e) => e.id === id);
+        void cambiar([{ id, bloqueado: !actual?.bloqueado }]);
+      });
+    });
+
+    seccion.querySelectorAll<HTMLButtonElement>('[data-todos]').forEach((boton) => {
+      boton.addEventListener('click', () => {
+        const bloqueado = boton.dataset.todos === 'cerrar';
+        void cambiar(filas.map((f) => ({ id: f.dataset.reto!, bloqueado })));
+      });
+    });
+
+    seccion.querySelectorAll<HTMLButtonElement>('[data-salir]').forEach((boton) => {
+      boton.addEventListener('click', () => {
+        cerrarSesion();
+        usuario = null;
+        estados = [];
+        mostrar('entrar');
+        // Hay que volver a pedir el boton: el anterior ya cumplio su promesa y
+        // no volveria a llamar a `entrar`.
+        pedirEntrada();
+      });
+    });
+
+    /** Pregunta al servidor si esta cuenta manda, y pinta lo que toque. */
+    const entrar = async (nuevo: Usuario) => {
+      usuario = nuevo;
+
+      try {
+        const respuesta = await cargarRetos(nuevo.idToken);
+        if (!respuesta.admin) {
+          mostrar('denegado');
+          return;
+        }
+        estados = respuesta.retos;
+        if (quien) quien.textContent = nuevo.nombre;
+        pintar();
+        mostrar('panel');
+      } catch (error) {
+        avisar(explicar(error));
+        mostrar('denegado');
+      }
+    };
+
+    const pedirEntrada = () => {
+      const destino = seccion.querySelector<HTMLElement>('[data-boton-google]');
+      if (destino) void identificarse(destino).then(entrar);
+    };
+
+    // Con sesion guardada se entra directo; si ya no vale, el servidor la
+    // tratara como una cuenta cualquiera y se acaba en "denegado", desde donde
+    // se puede volver a entrar.
+    if (usuario) void entrar(usuario);
+    else pedirEntrada();
+  }
+</script>
+
+<style>
+  .panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 100vh;
+    padding: 22px 18px 40px;
+  }
+
+  .marco-exterior,
+  .marco-interior {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .marco-exterior {
+    inset: 10px;
+    border: 1.5px solid var(--dorado);
+  }
+
+  .marco-interior {
+    inset: 15px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+  }
+
+  .barra {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 10px 0;
+  }
+
+  .volver {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 6px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .firma {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--dorado);
+  }
+
+  .titulo {
+    position: relative;
+    text-align: center;
+  }
+
+  .titulo h1 {
+    margin: 0;
+    font-family: var(--script);
+    font-size: 40px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
+  .subtitulo {
+    margin: 8px 0 0;
+    font-size: 15px;
+    color: var(--texto-suave);
+  }
+
+  .paso {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 0 10px;
+  }
+
+  .explicacion {
+    margin: 0;
+    padding: 14px 16px;
+    border: 1px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.55);
+    font-size: 15px;
+    line-height: 1.5;
+    text-align: center;
+    text-wrap: pretty;
+  }
+
+  .boton-google {
+    display: flex;
+    justify-content: center;
+  }
+
+  .cabecera-lista {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .epigrafe {
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    color: var(--dorado-oscuro);
+  }
+
+  .cabecera-lista span:last-child {
+    font-size: 15px;
+    color: var(--texto-suave);
+  }
+
+  .lista {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .reto {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 60px;
+    padding: 10px 0;
+    border: none;
+    border-bottom: 0.5px solid rgba(163, 121, 42, 0.4);
+    background: transparent;
+    color: var(--texto);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .texto {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .numero {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--dorado-oscuro);
+  }
+
+  .tarea {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  .mando {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .etiqueta {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--dorado);
+  }
+
+  .reto[aria-pressed='true'] .etiqueta {
+    color: var(--dorado-oscuro);
+  }
+
+  .interruptor {
+    position: relative;
+    width: 44px;
+    height: 26px;
+    border: 1px solid var(--dorado);
+    background: transparent;
+    transition: background 0.3s;
+  }
+
+  .reto[aria-pressed='true'] .interruptor {
+    background: var(--dorado-oscuro);
+  }
+
+  .bola {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: var(--dorado);
+    transition:
+      left 0.3s,
+      background 0.3s;
+  }
+
+  .reto[aria-pressed='true'] .bola {
+    left: 21px;
+    background: var(--sobre-dorado);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .interruptor,
+    .bola {
+      transition: none;
+    }
+  }
+
+  .acciones {
+    display: flex;
+    gap: 10px;
+  }
+
+  .acciones .boton-linea {
+    flex: 1;
+  }
+
+  .aviso {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--dorado-oscuro);
+    text-align: center;
+  }
+
+  .pie-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    margin-top: 6px;
+  }
+
+  .boton-linea {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 22px;
+    border: 1px solid var(--dorado);
+    background: transparent;
+    color: var(--dorado-oscuro);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .boton-solido {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0 28px;
+    border: 1px solid var(--dorado-oscuro);
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .boton-solido:hover {
+    color: var(--sobre-dorado);
+  }
+</style>

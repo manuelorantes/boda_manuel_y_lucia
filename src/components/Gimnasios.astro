@@ -13,8 +13,10 @@ const gimnasios = GIMNASIOS.map((g) => ({
   dibujo: g.imagen ? dibujos[`../assets/${g.imagen}.png`]?.default : undefined,
 }));
 
-// Los bloqueados no cuentan: la Liga se completa con los que estan abiertos.
-const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
+// Cuantos habra abiertos mientras no conteste el servidor. Los dos ultimos
+// nacen cerrados: si no hay cobertura es mejor quedarse corto que ensenar
+// abierto un reto que los novios aun no han abierto.
+const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).length;
 ---
 
 <section class="vista gimnasios" data-vista="gimnasios" hidden>
@@ -39,7 +41,7 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
   <div class="progreso">
     <div class="cabecera-progreso">
       <span class="epigrafe">MEDALLAS</span>
-      <span class="cuenta" data-contador>0 / {abiertos}</span>
+      <span class="cuenta" data-contador>0 / {abiertosPorDefecto}</span>
     </div>
     <div class="barra-progreso"><div data-barra></div></div>
   </div>
@@ -47,16 +49,23 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
   <div class="retos">
     {
       gimnasios.map((g) => (
-        <div class="reto" data-gimnasio={g.id} data-bloqueado={g.bloqueado ? '' : undefined}>
+        /*
+          `data-bloqueado` sale ya puesto en los que nacen cerrados: asi la
+          tarjeta correcta se ve desde el primer pintado, antes de que conteste
+          el servidor, y tambien sin JavaScript. Luego el script lo pone y lo
+          quita segun lo que diga el Apps Script.
+        */
+        <div class="reto" data-gimnasio={g.id} data-bloqueado={g.bloqueadoPorDefecto ? '' : undefined}>
           <div class="cabecera">
             <button
               class="medalla"
               type="button"
               aria-pressed="false"
-              aria-label={`Marcar la medalla de ${g.reto}`}
-              disabled={g.bloqueado}
+              aria-label={`Marcar la medalla del ${g.gimnasio.toLowerCase()}`}
+              disabled={g.bloqueadoPorDefecto}
             >
-              {g.bloqueado ? <span class="candado" /> : <span class="gema" />}
+              <span class="gema" />
+              <span class="candado" />
             </button>
 
             <button class="resumen" type="button" aria-expanded="false" aria-controls={`gym-${g.id}`}>
@@ -64,7 +73,8 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
                 <span class="numero">{g.gimnasio}</span>
                 <span class="tarea">{g.reto}</span>
               </span>
-              <span class="marca">{g.bloqueado ? 'PRÓXIMAMENTE' : 'HECHO'}</span>
+              <span class="marca hecho">HECHO</span>
+              <span class="marca bloqueado">BLOQUEADO</span>
               <span class="chevron" />
             </button>
           </div>
@@ -76,6 +86,10 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
               </div>
             )}
             <p class="descripcion">{g.descripcion}</p>
+            <div class="cartel">
+              <p class="epigrafe">RETO BLOQUEADO</p>
+              <p class="pronto">Se desbloqueará próximamente.</p>
+            </div>
           </div>
         </div>
       ))
@@ -254,9 +268,9 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
     background: rgba(138, 100, 35, 0.1);
   }
 
-  /* Un reto sin anunciar sigue a la vista, pero se lee como apagado. */
+  /* Un reto bloqueado sigue a la vista, pero se lee como apagado. */
   .reto[data-bloqueado] {
-    opacity: 0.6;
+    opacity: 0.75;
   }
 
   .cabecera {
@@ -294,12 +308,22 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
     transform: scale(1.08);
   }
 
+  /*
+    Los dos iconos de la medalla van siempre en el HTML y manda el CSS cual se
+    ve. El bloqueo cambia en caliente cuando contesta el servidor, y asi el
+    cambio es un atributo en la tarjeta y no reconstruir el boton.
+  */
   .gema {
     width: 7px;
     height: 7px;
     background: var(--dorado);
     transform: rotate(45deg);
     transition: background 0.3s;
+  }
+
+  .reto[data-bloqueado] .gema,
+  .reto:not([data-bloqueado]) .candado {
+    display: none;
   }
 
   .reto[data-hecho] .gema {
@@ -383,12 +407,14 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
     color: var(--dorado-oscuro);
   }
 
-  /* "HECHO" solo cuando lo esta; "PRÓXIMAMENTE" siempre, que no depende de nadie. */
-  .reto:not([data-hecho]):not([data-bloqueado]) .marca {
-    visibility: hidden;
+  /* "HECHO" solo cuando lo esta; "BLOQUEADO" manda sobre el otro. */
+  .reto[data-bloqueado] .marca.hecho,
+  .reto:not([data-bloqueado]) .marca.bloqueado,
+  .reto:not([data-hecho]) .marca.hecho {
+    display: none;
   }
 
-  .reto[data-hecho] .marca {
+  .reto[data-hecho]:not([data-bloqueado]) .marca.hecho {
     animation: aparecer 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 
@@ -434,6 +460,35 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
     line-height: 1.5;
     color: var(--texto-suave);
     text-wrap: pretty;
+  }
+
+  /*
+    Bloqueado no se desenfoca: se esconde y se pone el cartel en su sitio. El
+    diseno lo desenfocaba, pero un `filter: blur` sobre un texto que sigue en
+    el HTML es un cartel de "leeme el codigo fuente"; si el reto esta cerrado,
+    que lo parezca de verdad.
+  */
+  .reto[data-bloqueado] .dibujo,
+  .reto[data-bloqueado] .descripcion,
+  .reto:not([data-bloqueado]) .cartel {
+    display: none;
+  }
+
+  .cartel {
+    padding: 12px 16px;
+    border: 1px solid var(--dorado);
+    background: rgba(247, 240, 222, 0.92);
+    text-align: center;
+  }
+
+  .cartel p {
+    margin: 0;
+  }
+
+  .pronto {
+    margin-top: 4px;
+    font-size: 15px;
+    line-height: 1.4;
   }
 
   .campeon {
@@ -540,6 +595,7 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
 
 <script>
   import { CLAVE_MEDALLAS, leerMedallas, guardarMedallas } from '../lib/medallas';
+  import { cargarRetos, retosGuardados, type EstadoReto } from '../lib/retos';
 
   const seccion = document.querySelector<HTMLElement>('.gimnasios');
 
@@ -548,9 +604,6 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
     const contador = seccion.querySelector<HTMLElement>('[data-contador]');
     const barra = seccion.querySelector<HTMLElement>('[data-barra]');
     const campeon = seccion.querySelector<HTMLElement>('[data-campeon]');
-
-    // Los bloqueados no entran en la cuenta: la Liga se gana con los abiertos.
-    const abiertos = retos.filter((r) => r.dataset.bloqueado === undefined);
 
     let conseguidas = leerMedallas();
 
@@ -564,10 +617,46 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
       guardarMedallas(conseguidas);
     }
 
+    const abierto = (reto: HTMLElement) => reto.dataset.bloqueado === undefined;
+
+    /**
+     * Aplica el estado que manda el servidor: que retos estan abiertos y, si
+     * la hoja trae texto propio, con que se pinta la tarjeta.
+     */
+    const aplicarRetos = (estados: EstadoReto[]) => {
+      const porId = new Map(estados.map((e) => [e.id, e]));
+
+      retos.forEach((reto) => {
+        const estado = porId.get(reto.dataset.gimnasio!);
+        // Un reto que el servidor no menciona se queda como esta: mejor no
+        // tocarlo que abrirlo por un descuadre entre la hoja y la web.
+        if (!estado) return;
+
+        if (estado.bloqueado) reto.dataset.bloqueado = '';
+        else delete reto.dataset.bloqueado;
+
+        reto.querySelector<HTMLButtonElement>('.medalla')!.disabled = estado.bloqueado;
+
+        if (estado.reto) {
+          const tarea = reto.querySelector<HTMLElement>('.tarea');
+          if (tarea) tarea.textContent = estado.reto;
+        }
+        if (estado.descripcion) {
+          const texto = reto.querySelector<HTMLElement>('.descripcion');
+          if (texto) texto.textContent = estado.descripcion;
+        }
+      });
+
+      pintar();
+    };
+
     const pintar = () => {
+      const abiertos = retos.filter(abierto);
+      // Una medalla de un reto que se ha vuelto a cerrar no cuenta, pero
+      // tampoco se borra: si los novios lo reabren, sigue ahi.
       const hechas = abiertos.filter((r) => conseguidas[r.dataset.gimnasio!]).length;
 
-      abiertos.forEach((reto) => {
+      retos.forEach((reto) => {
         const hecha = !!conseguidas[reto.dataset.gimnasio!];
         // El atributo manda el estilo de toda la tarjeta, no solo el del boton.
         if (hecha) reto.dataset.hecho = '';
@@ -576,8 +665,8 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
       });
 
       if (contador) contador.textContent = `${hechas} / ${abiertos.length}`;
-      if (barra) barra.style.width = `${(hechas / abiertos.length) * 100}%`;
-      if (campeon) campeon.hidden = hechas !== abiertos.length;
+      if (barra) barra.style.width = `${abiertos.length ? (hechas / abiertos.length) * 100 : 0}%`;
+      if (campeon) campeon.hidden = !abiertos.length || hechas !== abiertos.length;
 
       // El bloque LOS GIMNASIOS de la invitacion pinta el mismo numero. Se
       // avisa desde aqui, que es quien sabe cuando cambia y ya ha limpiado lo
@@ -591,6 +680,7 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
       const detalle = reto.querySelector<HTMLElement>('.detalle');
 
       medalla?.addEventListener('click', () => {
+        if (!abierto(reto)) return;
         const id = reto.dataset.gimnasio!;
         if (conseguidas[id]) delete conseguidas[id];
         else conseguidas[id] = true;
@@ -601,7 +691,7 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
       // Solo un desplegable abierto a la vez, como en el diseno: la lista es
       // larga y con dos abiertos hay que hacer scroll a ciegas.
       resumen?.addEventListener('click', () => {
-        const abierto = resumen.getAttribute('aria-expanded') === 'true';
+        const desplegado = resumen.getAttribute('aria-expanded') === 'true';
 
         retos.forEach((otro) => {
           otro.querySelector('.resumen')?.setAttribute('aria-expanded', 'false');
@@ -609,7 +699,7 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
           if (suyo) suyo.hidden = true;
         });
 
-        if (!abierto) {
+        if (!desplegado) {
           resumen.setAttribute('aria-expanded', 'true');
           if (detalle) detalle.hidden = false;
         }
@@ -624,6 +714,18 @@ const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
       pintar();
     });
 
-    pintar();
+    // Primero lo ultimo que se supo, que pinta al instante; despues lo que
+    // diga el servidor. Sin esto la pantalla se queda un segundo largo con el
+    // estado de fabrica mientras responde el Apps Script.
+    const guardados = retosGuardados();
+    if (guardados) aplicarRetos(guardados);
+    else pintar();
+
+    cargarRetos()
+      .then((respuesta) => aplicarRetos(respuesta.retos))
+      .catch(() => {
+        // Sin cobertura se queda lo ultimo conocido. No se avisa: el invitado
+        // no puede hacer nada al respecto y los retos se leen igual.
+      });
   }
 </script>

@@ -30,7 +30,31 @@ const FOLDER_ID = '1D1Ueo7FnYXRoPRc0A8TqnJh0QBgdUCDO';
 const CLIENT_ID = '464845944511-jfk0lo638e0s794q7upoe13k2pjgijhk.apps.googleusercontent.com';
 
 const HOJA = 'Capturas';
+const HOJA_GIMNASIOS = 'Gimnasios';
 const MAX_BYTES = 700 * 1024; // por foto; llegan recortadas a 480 px
+
+/**
+ * Estado inicial de los retos, solo para `prepararGimnasios()`.
+ *
+ * Los identificadores tienen que coincidir con los de `src/data/pokedex.ts`
+ * en la web: es lo que empareja cada fila de la hoja con su tarjeta.
+ *
+ * Los dos ultimos nacen bloqueados porque son los que se abren avanzada la
+ * fiesta. Su texto, como el de los otros seis, esta en la web.
+ */
+const GIMNASIOS_INICIALES = [
+  ['smeargle', false],
+  ['recuerdo', false],
+  ['karaoke', false],
+  ['delibird', false],
+  ['sudowoodo', false],
+  ['alakazam', false],
+  ['snorlax', true],
+  ['porygon', true],
+];
+
+/** Segundos que se reutiliza la respuesta de `retos` para los invitados. */
+const CACHE_RETOS = 30;
 
 function doPost(e) {
   try {
@@ -41,6 +65,13 @@ function doPost(e) {
     // que adivinar. No expone nada privado: el ID de cliente es publico y de
     // la carpeta y la hoja solo se dice si se alcanzan, no su contenido.
     if (peticion.accion === 'diagnostico') return json(diagnostico());
+
+    // Los retos se consultan SIN identificarse: los gimnasios estan abiertos
+    // a todo el mundo y el invitado no tiene cuenta. Si viene token se mira
+    // igualmente, porque el panel necesita saber si quien pregunta manda.
+    if (peticion.accion === 'retos') {
+      return json(retos(peticion.idToken ? verificarToken(peticion.idToken) : null));
+    }
 
     const usuario = verificarToken(peticion.idToken);
     if (!usuario) return json({ ok: false, error: 'auth' });
@@ -54,6 +85,8 @@ function doPost(e) {
         return json({ ok: true, capturas: capturasDe(usuario.sub) });
       case 'foto':
         return json(foto(usuario.sub, peticion.ficheroId));
+      case 'bloquear':
+        return json(bloquear(usuario, peticion));
       default:
         return json({ ok: false, error: 'accion' });
     }
@@ -91,6 +124,21 @@ function diagnostico() {
     resultado.hoja = 'ERROR: ' + String(err);
   }
 
+  // Sin la pestana Gimnasios no hay bloqueos y los ocho retos saldrian
+  // abiertos, los dos ultimos incluidos. Conviene verlo de un vistazo.
+  try {
+    const filas = filasGimnasios();
+    resultado.gimnasios = filas.length
+      ? filas.length + ' retos (' + filas.filter(function (f) { return f.bloqueado; }).length + ' bloqueados)'
+      : 'ERROR: no existe ' + HOJA_GIMNASIOS + ' o esta vacia; ejecuta prepararGimnasios()';
+  } catch (err) {
+    resultado.gimnasios = 'ERROR: ' + String(err);
+  }
+
+  // El correo no se dice, solo si esta puesto: el diagnostico es publico. Sin
+  // el, el panel no deja entrar a nadie y los retos no se pueden abrir.
+  resultado.adminPuesto = adminEmail().indexOf('@') !== -1;
+
   return resultado;
 }
 
@@ -116,7 +164,43 @@ function verificarToken(idToken) {
   if (datos.aud !== CLIENT_ID) return null;
   if (!datos.sub) return null;
 
-  return { sub: datos.sub, nombre: String(datos.name || 'Invitado').slice(0, 80) };
+  // El correo se lee solo para reconocer la cuenta maestra y se queda en
+  // memoria durante la peticion: no se escribe en ninguna hoja ni se
+  // devuelve a la web, que sigue sin saber el correo de nadie.
+  return {
+    sub: datos.sub,
+    nombre: String(datos.name || 'Invitado').slice(0, 80),
+    correo: datos.email_verified === 'true' || datos.email_verified === true ? datos.email : '',
+  };
+}
+
+/**
+ * Correo de la cuenta maestra, la unica que puede tocar los bloqueos.
+ *
+ * NO va escrito en este fichero: esta copia del script esta versionada en un
+ * repositorio publico, y ahi el correo seria a la vez una direccion regalada
+ * a los rastreadores y un cartel diciendo que cuenta manda.
+ *
+ * Vive en las propiedades del proyecto, que solo se ven desde el editor de
+ * Apps Script: Configuracion del proyecto > Propiedades de la secuencia de
+ * comandos > ADMIN_EMAIL. Si falta, no manda nadie y los retos se quedan como
+ * esten; es el fallo mas prudente de los dos posibles.
+ */
+function adminEmail() {
+  return PropertiesService.getScriptProperties().getProperty('ADMIN_EMAIL') || '';
+}
+
+/**
+ * Si esta cuenta es la maestra.
+ *
+ * Se compara el correo del token, no el `sub`, para que cambiar de cuenta
+ * maestra sea escribir una direccion y no ir a buscar un identificador.
+ */
+function esAdmin(usuario) {
+  // Un invitado sin token es el caso comun, y asi ni se toca Properties.
+  if (!usuario || !usuario.correo) return false;
+  const admin = adminEmail();
+  return !!admin && usuario.correo.toLowerCase() === admin.toLowerCase();
 }
 
 /** Carpeta del invitado, creandola la primera vez. */
@@ -224,6 +308,135 @@ function foto(sub, ficheroId) {
     ok: true,
     dataUrl: 'data:' + blob.getContentType() + ';base64,' + Utilities.base64Encode(blob.getBytes()),
   };
+}
+
+// ---------------------------------------------------------------- gimnasios
+
+/**
+ * Estado de los retos: cuales estan abiertos y cuales bloqueados.
+ *
+ * El texto de los ocho vive en la web (`src/data/pokedex.ts`), asi que aqui no
+ * hay nada que esconder y la respuesta es igual para todos. Las columnas
+ * `reto` y `descripcion` de la hoja son un apano: si vienen escritas mandan
+ * sobre el texto de la web, y eso permite corregir una errata el mismo dia sin
+ * volver a desplegar la pagina.
+ */
+function retos(usuario) {
+  // La lista es identica para todo el mundo, y el dia de la boda la piden
+  // ciento y pico moviles seguidos. Guardarla medio minuto evita repetir la
+  // lectura de la hoja y deja sitio en las 30 ejecuciones simultaneas que da
+  // Apps Script.
+  const cache = CacheService.getScriptCache();
+  let lista = cache.get('retos');
+
+  if (!lista) {
+    lista = JSON.stringify(
+      filasGimnasios().map(function (fila) {
+        return {
+          id: fila.id,
+          bloqueado: fila.bloqueado,
+          reto: fila.reto,
+          descripcion: fila.descripcion,
+        };
+      }),
+    );
+    cache.put('retos', lista, CACHE_RETOS);
+  }
+
+  // `admin` va fuera de la cache: depende de quien pregunte, la lista no.
+  return { ok: true, admin: esAdmin(usuario), retos: JSON.parse(lista) };
+}
+
+/**
+ * Bloquea o desbloquea retos. Acepta varios de golpe para que "activar
+ * todos" sea una peticion y no ocho.
+ */
+function bloquear(usuario, peticion) {
+  if (!esAdmin(usuario)) return { ok: false, error: 'permiso' };
+
+  const cambios = peticion.cambios;
+  if (!cambios || !cambios.length) return { ok: false, error: 'cambios' };
+
+  const hoja = hojaGimnasios();
+  if (!hoja) return { ok: false, error: 'hoja' };
+
+  // Es la unica parte del script que MODIFICA filas en vez de anadirlas. Solo
+  // escribe la cuenta maestra, asi que no compite con los envios de fotos,
+  // pero el candado evita que dos pulsaciones seguidas desde el panel se
+  // pisen la una a la otra.
+  const candado = LockService.getScriptLock();
+  candado.waitLock(10000);
+  try {
+    const valores = hoja.getDataRange().getValues();
+    const ahora = new Date();
+
+    cambios.forEach(function (cambio) {
+      for (let i = 1; i < valores.length; i++) {
+        if (String(valores[i][0]).trim() !== String(cambio.id).trim()) continue;
+        hoja.getRange(i + 1, 2).setValue(cambio.bloqueado ? true : false);
+        hoja.getRange(i + 1, 5).setValue(ahora);
+        break;
+      }
+    });
+  } finally {
+    candado.releaseLock();
+  }
+
+  // Si no se tira la copia, los invitados seguirian viendo el estado viejo
+  // hasta medio minuto despues de desbloquear. En una boda eso es una cola de
+  // gente mirando el movil sin entender por que no cambia.
+  CacheService.getScriptCache().remove('retos');
+
+  return retos(usuario);
+}
+
+/** Las filas de la pestana Gimnasios, ya interpretadas. */
+function filasGimnasios() {
+  const hoja = hojaGimnasios();
+  if (!hoja) return [];
+
+  return hoja
+    .getDataRange()
+    .getValues()
+    .slice(1)
+    .filter(function (fila) {
+      return String(fila[0]).trim();
+    })
+    .map(function (fila) {
+      return {
+        id: String(fila[0]).trim(),
+        // La casilla admite TRUE de la hoja o el texto "si": se edita a mano
+        // desde el movil y ahi es facil escribir una cosa por la otra.
+        bloqueado: fila[1] === true || /^(true|si|sí|1|x)$/i.test(String(fila[1]).trim()),
+        reto: String(fila[2] || ''),
+        descripcion: String(fila[3] || ''),
+      };
+    });
+}
+
+function hojaGimnasios() {
+  return SpreadsheetApp.getActive().getSheetByName(HOJA_GIMNASIOS);
+}
+
+/**
+ * Crea la pestana Gimnasios con los ocho retos. Se ejecuta UNA vez a mano
+ * desde el editor de Apps Script; si la pestana ya existe no toca nada, para
+ * no borrar los textos secretos ya escritos.
+ */
+function prepararGimnasios() {
+  if (hojaGimnasios()) return 'La pestana ' + HOJA_GIMNASIOS + ' ya existe: no se toca.';
+
+  const hoja = SpreadsheetApp.getActive().insertSheet(HOJA_GIMNASIOS);
+  hoja.appendRow(['id', 'bloqueado', 'reto', 'descripcion', 'actualizado']);
+  GIMNASIOS_INICIALES.forEach(function (g) {
+    hoja.appendRow([g[0], g[1], '', '', new Date()]);
+  });
+  hoja.setFrozenRows(1);
+  hoja.getRange(2, 2, GIMNASIOS_INICIALES.length, 1).insertCheckboxes();
+  hoja.setColumnWidth(3, 260);
+  hoja.setColumnWidth(4, 520);
+
+  return 'Pestana ' + HOJA_GIMNASIOS + ' creada con ' + GIMNASIOS_INICIALES.length + ' retos.';
 }
 
 function filasDe(sub) {

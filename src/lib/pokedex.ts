@@ -4,7 +4,8 @@
  * Todo esto corre en el navegador del invitado. La web es estatica, asi que
  * el receptor de las fotos es un Apps Script (ver apps-script/Codigo.gs).
  */
-import { GOOGLE_CLIENT_ID, LADO_FOTO, POKEDEX_ENDPOINT } from '../config';
+import { GOOGLE_CLIENT_ID, LADO_FOTO } from '../config';
+import { llamar } from './appsScript';
 
 export interface Usuario {
   /** Identificador estable de la cuenta de Google. No es el correo. */
@@ -181,81 +182,7 @@ export function prepararFoto(fichero: File): Promise<string> {
   });
 }
 
-// --------------------------------------------------------------- transporte
-
-/**
- * Llama al Apps Script.
- *
- * text/plain evita la peticion previa OPTIONS, que Apps Script no contesta.
- * El POST responde con una redireccion que el navegador sigue: la respuesta
- * se puede leer, comprobado contra el despliegue real.
- *
- * Reintenta con espera creciente porque Apps Script solo admite 30
- * ejecuciones a la vez, y en una boda los envios se amontonan.
- */
-/** Errores del script que no tiene sentido reintentar: fallarian igual. */
-const DEFINITIVOS = new Set(['auth', 'formato', 'hueco', 'ajena', 'accion']);
-
-/** Traduce el codigo del script a algo que el invitado pueda entender. */
-export function explicar(error: unknown): string {
-  const codigo = error instanceof Error ? error.message : String(error);
-
-  switch (codigo) {
-    case 'auth':
-      return 'Google no ha aceptado tu identificación. Cierra sesión y vuelve a entrar.';
-    case 'formato':
-      return 'Esa foto tiene un formato que no admitimos.';
-    case 'tamano':
-      return 'La foto ha salido demasiado grande.';
-    case 'hueco':
-      return 'Ese hueco no es válido.';
-    default:
-      return 'No hemos podido conectar. Inténtalo con más cobertura.';
-  }
-}
-
-async function llamar<T>(cuerpo: Record<string, unknown>, intentos = 3): Promise<T> {
-  let ultimoError: unknown;
-
-  for (let intento = 0; intento < intentos; intento++) {
-    try {
-      const respuesta = await fetch(POKEDEX_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(cuerpo),
-      });
-      const datos = await respuesta.json();
-
-      if (datos.ok === false) {
-        const fallo = new Error(datos.error || 'error');
-        // Un token rechazado o un formato invalido no mejoran reintentando:
-        // se sale ya y se dice por que, en vez de esperar tres veces.
-        if (DEFINITIVOS.has(fallo.message)) throw Object.assign(fallo, { definitivo: true });
-        throw fallo;
-      }
-
-      return datos as T;
-    } catch (error) {
-      ultimoError = error;
-      if ((error as { definitivo?: boolean })?.definitivo) break;
-
-      // Espera aleatoria: si fallan cincuenta a la vez, que no reintenten
-      // todos en el mismo instante.
-      const espera = 400 * 2 ** intento + Math.random() * 400;
-      await new Promise((r) => setTimeout(r, espera));
-    }
-  }
-
-  throw ultimoError instanceof Error ? ultimoError : new Error('error');
-}
-
-/** Estado del Apps Script, para depurar sin adivinar. */
-export function diagnostico() {
-  return llamar<{ ok: true; clientId: string; clientIdPuesto: boolean }>(
-    { accion: 'diagnostico' },
-    1,
-  );
-}
+// ------------------------------------------------------- peticiones al script
 
 export function subirFoto(usuario: Usuario, hueco: number, persona: string, foto: string) {
   return llamar<{ ok: true; ficheroId: string }>({

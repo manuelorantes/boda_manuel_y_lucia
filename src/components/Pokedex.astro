@@ -546,7 +546,6 @@ const huecos = HUECOS.map((h) => {
     cerrarSesion,
     descargarFoto,
     identificarse,
-    explicar,
     prepararFoto,
     quitarFoto,
     subirFoto,
@@ -554,6 +553,7 @@ const huecos = HUECOS.map((h) => {
     CLAVE_FOTOS,
     type Usuario,
   } from '../lib/pokedex';
+  import { explicar } from '../lib/appsScript';
 
   const seccion = document.querySelector<HTMLElement>('.pokedex');
   const panelLogin = document.querySelector<HTMLElement>('[data-login]');

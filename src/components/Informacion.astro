@@ -10,8 +10,11 @@ const MAPA = 'https://maps.app.goo.gl/KQpEZoszp1jsFZWA9';
 
 // Totales de los dos juegos, para que el script pueda calcular el porcentaje
 // sin volver a importar las listas enteras al navegador.
+//
+// El de las medallas es solo el de partida: cuantos retos hay abiertos lo
+// decide el servidor, y el script lo corrige con lo ultimo que se sepa.
 const HUECOS_TOTALES = HUECOS.length;
-const MEDALLAS_TOTALES = GIMNASIOS.filter((g) => !g.bloqueado).length;
+const MEDALLAS_POR_DEFECTO = GIMNASIOS.filter((g) => !g.bloqueadoPorDefecto).length;
 
 // Los telefonos no viven en el repositorio: entran en tiempo de build desde
 // variables de entorno (.env en local, secretos de Actions en CI). Ademas se
@@ -93,7 +96,7 @@ const contactos = definidos.map((c) => ({
     <p class="detalle">
       Retos del día. Consigue todas las medallas y conviértete en campeón de la Liga.
     </p>
-    <div class="avance" data-avance="gimnasios" data-total={MEDALLAS_TOTALES} hidden>
+    <div class="avance" data-avance="gimnasios" data-total={MEDALLAS_POR_DEFECTO} hidden>
       <div class="cabecera-avance">
         <span data-etiqueta>Medallas</span>
         <span class="cifra" data-cifra></span>
@@ -144,6 +147,7 @@ const contactos = definidos.map((c) => ({
   import { revelar, telefonoParaLeer } from '../lib/contacto';
   import { CLAVE_FOTOS } from '../lib/pokedex';
   import { leerMedallas } from '../lib/medallas';
+  import { retosGuardados } from '../lib/retos';
 
   // Deshace la codificacion del build y monta el enlace real. Se ejecuta en el
   // navegador, asi que el numero nunca aparece en el HTML que se sirve.
@@ -184,11 +188,14 @@ const contactos = definidos.map((c) => ({
     // que dentro de cada pantalla: la cifra grande tiene que decir lo mismo
     // aqui y alli para que no parezcan dos marcadores distintos.
     formato: (hechos: number, total: number) => { etiqueta: string; cifra: string },
+    totalReal?: number,
   ) => {
     const bloque = document.querySelector<HTMLElement>(`[data-avance="${nombre}"]`);
     if (!bloque) return;
 
-    const total = Number(bloque.dataset.total) || 0;
+    // El `||` y no `??`: un data-total ausente da NaN, no undefined, y NaN
+    // pasaria de largo por `??` y dejaria el porcentaje en NaN.
+    const total = totalReal ?? (Number(bloque.dataset.total) || 0);
     if (hechos <= 0 || total <= 0) {
       bloque.hidden = true;
       return;
@@ -211,10 +218,18 @@ const contactos = definidos.map((c) => ({
       cifra: `${Math.round((hechos / total) * 100)}%`,
     }));
 
-    pintarAvance('gimnasios', Object.values(leerMedallas()).filter(Boolean).length, (h, t) => ({
-      etiqueta: 'Medallas',
-      cifra: `${h} / ${t}`,
-    }));
+    // Cuantos retos hay abiertos lo manda el servidor. Aqui no se le pregunta:
+    // se usa lo ultimo que guardo la pantalla de gimnasios, y si el invitado
+    // aun no ha entrado ahi, el total de partida del atributo.
+    const estados = retosGuardados();
+    const abiertos = estados?.filter((r) => !r.bloqueado).length;
+
+    pintarAvance(
+      'gimnasios',
+      Object.values(leerMedallas()).filter(Boolean).length,
+      (h, t) => ({ etiqueta: 'Medallas', cifra: `${h} / ${t}` }),
+      abiertos,
+    );
   };
 
   refrescar();

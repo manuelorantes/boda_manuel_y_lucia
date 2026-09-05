@@ -56,6 +56,19 @@ const GIMNASIOS_INICIALES = [
 /** Segundos que se reutiliza la respuesta de `retos` para los invitados. */
 const CACHE_RETOS = 30;
 
+/**
+ * Abrir la URL /exec en el navegador es un GET, y sin esto Apps Script
+ * contesta "Funcion de script no encontrada: doGet", que parece que algo se ha
+ * roto cuando no lo esta.
+ *
+ * Devuelve el diagnostico, que es lo unico que tiene sentido mirar desde un
+ * navegador y ya era publico. Sirve para comprobar desde el movil, sin
+ * herramientas, que el despliegue esta al dia y bien configurado.
+ */
+function doGet() {
+  return json(diagnostico());
+}
+
 function doPost(e) {
   try {
     const peticion = JSON.parse(e.postData.contents);

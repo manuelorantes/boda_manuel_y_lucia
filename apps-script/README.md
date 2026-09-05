@@ -25,6 +25,11 @@ editar (lápiz) → Versión: Nueva versión → Implementar**. Si te saltas ese
 la URL sigue sirviendo la versión antigua y parece que tu cambio no ha hecho
 nada. Es el error clásico de Apps Script.
 
+Para saber qué versión hay puesta, **abre la URL `/exec` en el navegador**: el
+`doGet` devuelve el diagnóstico (qué hoja ve, cuántos retos, si la cuenta
+maestra está configurada). Se puede mirar desde el móvil y no expone nada
+privado.
+
 ## Lo que hay que rellenar antes
 
 - `CLIENT_ID`: el ID de cliente OAuth, cuando esté creado. Mientras ponga

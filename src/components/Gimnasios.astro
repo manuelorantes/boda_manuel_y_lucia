@@ -85,10 +85,16 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
                 <Image src={g.dibujo} alt="" width={300} loading="lazy" />
               </div>
             )}
-            <p class="descripcion">{g.descripcion}</p>
-            <div class="cartel">
-              <p class="epigrafe">RETO BLOQUEADO</p>
-              <p class="pronto">Se desbloqueará próximamente.</p>
+            <div class="texto-reto">
+              <p class="descripcion" aria-hidden={g.bloqueadoPorDefecto ? 'true' : undefined}>
+                {g.descripcion}
+              </p>
+              <div class="cartel">
+                <div class="cartel-caja">
+                  <p class="epigrafe">RETO BLOQUEADO</p>
+                  <p class="pronto">Se desbloqueará próximamente.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -460,28 +466,47 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
     line-height: 1.5;
     color: var(--texto-suave);
     text-wrap: pretty;
+    transition: filter 0.4s;
   }
 
   /*
-    Bloqueado no se desenfoca: se esconde y se pone el cartel en su sitio. El
-    diseno lo desenfocaba, pero un `filter: blur` sobre un texto que sigue en
-    el HTML es un cartel de "leeme el codigo fuente"; si el reto esta cerrado,
-    que lo parezca de verdad.
+    Bloqueado: el titulo y el Pokemon se ven siempre, y el texto queda
+    desenfocado con el cartel encima, como en el diseno.
+    
+    El desenfoque es un recurso visual, no una proteccion: el texto sigue en el
+    HTML y en el repositorio, que es publico. Se asumio a cambio de que la
+    pantalla se lea entera aunque el movil se quede sin cobertura.
   */
-  .reto[data-bloqueado] .dibujo,
-  .reto[data-bloqueado] .descripcion,
+  .texto-reto {
+    position: relative;
+  }
+
+  .reto[data-bloqueado] .descripcion {
+    filter: blur(5px);
+    user-select: none;
+  }
+
+  .cartel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+  }
+
   .reto:not([data-bloqueado]) .cartel {
     display: none;
   }
 
-  .cartel {
+  .cartel-caja {
     padding: 12px 16px;
     border: 1px solid var(--dorado);
     background: rgba(247, 240, 222, 0.92);
     text-align: center;
   }
 
-  .cartel p {
+  .cartel-caja p {
     margin: 0;
   }
 
@@ -552,6 +577,7 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
     .medalla,
     .gema,
     .chevron,
+    .descripcion,
     .reto {
       transition: none;
     }
@@ -637,14 +663,19 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
 
         reto.querySelector<HTMLButtonElement>('.medalla')!.disabled = estado.bloqueado;
 
+        // Un lector de pantalla no ve el desenfoque y leeria el reto entero,
+        // asi que cuando esta bloqueado se le deja solo el cartel.
+        const texto = reto.querySelector<HTMLElement>('.descripcion');
+        if (texto) {
+          if (estado.bloqueado) texto.setAttribute('aria-hidden', 'true');
+          else texto.removeAttribute('aria-hidden');
+        }
+
         if (estado.reto) {
           const tarea = reto.querySelector<HTMLElement>('.tarea');
           if (tarea) tarea.textContent = estado.reto;
         }
-        if (estado.descripcion) {
-          const texto = reto.querySelector<HTMLElement>('.descripcion');
-          if (texto) texto.textContent = estado.descripcion;
-        }
+        if (estado.descripcion && texto) texto.textContent = estado.descripcion;
       });
 
       pintar();

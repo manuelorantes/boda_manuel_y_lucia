@@ -8,6 +8,7 @@ import Participantes from './Participantes.astro';
 import Pokedex from './Pokedex.astro';
 import Gimnasios from './Gimnasios.astro';
 import Album from './Album.astro';
+import Faq from './Faq.astro';
 
 interface Props {
   /** Texto del titulo script de la portada. */
@@ -24,6 +25,13 @@ const { titulo, variante } = Astro.props;
   <Portada titulo={titulo} />
   <Informacion />
   <Confirmacion variante={variante} />
+
+  <section class="dudas">
+    <h2>¿DUDAS?</h2>
+    <p>Hemos reunido las preguntas que más nos hacéis.</p>
+    <a class="boton" href="#faq" data-ir-a="faq">Preguntas frecuentes</a>
+  </section>
+
   <Pie />
 </div>
 
@@ -32,11 +40,12 @@ const { titulo, variante } = Astro.props;
 <Pokedex />
 <Gimnasios />
 <Album />
+<Faq />
 
 <noscript>
   <!--
-    Sin JavaScript no hay cambio de vista, asi que se muestran las tres
-    seguidas: se pierde la navegacion, pero no el contenido.
+    Sin JavaScript no hay cambio de vista, asi que se muestran todas seguidas:
+    se pierde la navegacion, pero no el contenido.
   -->
   <style>
     .vista[hidden] {
@@ -44,6 +53,49 @@ const { titulo, variante } = Astro.props;
     }
   </style>
 </noscript>
+
+<style>
+  /* Gancho a la FAQ, entre la confirmacion y el pie */
+  .dudas {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 28px 26px;
+  }
+
+  .dudas h2 {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.24em;
+    color: var(--dorado-oscuro);
+  }
+
+  .dudas p {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.35;
+    color: var(--texto-suave);
+  }
+
+  .boton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    margin-top: 8px;
+    border: 1px solid var(--dorado);
+    color: var(--dorado-oscuro);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .boton:hover {
+    background: rgba(163, 121, 42, 0.08);
+    color: var(--dorado-oscuro);
+  }
+</style>
 
 <script>
   // Las vistas se turnan en el sitio, sin recargar, igual que en el diseno.
@@ -56,6 +108,7 @@ const { titulo, variante } = Astro.props;
     'pokedex',
     'gimnasios',
     'album',
+    'faq',
   ] as const;
   type Vista = (typeof VISTAS)[number];
 

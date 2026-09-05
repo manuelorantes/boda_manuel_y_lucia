@@ -551,10 +551,9 @@ const huecos = HUECOS.map((h) => {
     quitarFoto,
     subirFoto,
     usuarioGuardado,
+    CLAVE_FOTOS,
     type Usuario,
   } from '../lib/pokedex';
-
-  const CLAVE_FOTOS = 'lm-pokedex';
 
   const seccion = document.querySelector<HTMLElement>('.pokedex');
   const panelLogin = document.querySelector<HTMLElement>('[data-login]');
@@ -637,6 +636,10 @@ const huecos = HUECOS.map((h) => {
 
       if (contador) contador.textContent = `${llenos} / ${huecos.length}`;
       if (barra) barra.style.width = `${(llenos / huecos.length) * 100}%`;
+
+      // El bloque TU POKEDEX de la invitacion pinta el mismo avance, y la
+      // invitacion no se recarga al volver: hay que avisarla desde aqui.
+      window.dispatchEvent(new CustomEvent('lm:avance'));
 
       const pendientes = Object.values(fotos).filter((f) => !f.ficheroId).length;
 

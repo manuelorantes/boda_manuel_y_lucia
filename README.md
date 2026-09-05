@@ -33,27 +33,32 @@ npm run preview  # sirve dist/ en local
 
 ### Variables de entorno
 
-Los teléfonos de contacto **no están en el repositorio**, porque es público. Hay
-que crear un `.env` en la raíz (ya está en `.gitignore`):
+Los teléfonos de contacto y el número de cuenta para los regalos **no están en
+el repositorio**, porque es público. Hay que crear un `.env` en la raíz (ya está
+en `.gitignore`):
 
 ```bash
 TEL_LUCIA=+34XXXXXXXXX
 TEL_MANUEL=+34XXXXXXXXX
+IBAN=ESXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-En formato internacional y sin espacios. Si falta alguno **el build falla a
-propósito**: el bloque CONTACTO es contenido esencial, así que preferimos que un
+Los teléfonos en formato internacional y sin espacios; el IBAN también sin
+espacios. Si falta alguno **el build falla a propósito**: el bloque CONTACTO y
+la respuesta del regalo son contenido esencial, así que preferimos que un
 despliegue mal configurado se caiga y deje en pie la versión anterior, antes que
-publicar la invitación sin forma de contactar.
+publicar la invitación sin forma de contactar o con una FAQ que promete un IBAN
+que no aparece.
 
-En CI los mismos valores llegan desde los secretos del repositorio (Settings >
-Secrets and variables > Actions, con esos dos nombres); el workflow escribe el
-`.env` dentro del runner justo antes de construir.
+En CI los mismos valores llegan desde los secretos del entorno `github-pages`
+(Settings > Environments > github-pages, con esos tres nombres); el workflow
+escribe el `.env` dentro del runner justo antes de construir.
 
-Además, `Informacion.astro` no emite los números en claro en el HTML: los
-codifica en build y los recompone en el navegador. Es una barrera contra
-rastreadores automáticos, **no** un secreto: la web es pública y quien mire el
-`data-tel` con calma puede deshacer la codificación.
+Además, ni `Informacion.astro` ni `Faq.astro` emiten los valores en claro en el
+HTML: `src/lib/contacto.ts` los codifica en build y los recompone en el
+navegador. Es una barrera contra rastreadores automáticos, **no** un secreto: la
+web es pública y quien mire el `data-tel` o el `data-iban` con calma puede
+deshacer la codificación.
 
 ## Estructura
 
@@ -62,13 +67,28 @@ src/pages/index.astro        entrada general
 src/pages/vip.astro          entrada VIP
 src/layouts/Layout.astro     head, fuentes, tokens de color, marco del "móvil"
 src/components/
+  Entrada.astro              monta las vistas y las turna con el hash
   Portada.astro              título, nombres, fecha y cuenta atrás
-  Informacion.astro          cuándo, dónde, dress code, contacto
+  Informacion.astro          cuándo, dónde, dress code, contacto y avance de los juegos
   Confirmacion.astro         formulario paso a paso (markup + lógica cliente)
+  Historia.astro             cómic, vídeo de la pedida y la estrofa
+  Participantes.astro        el juego de adivinar quién es quién
+  Pokedex.astro              capturas de la boda (única pantalla con login)
+  Gimnasios.astro            los ocho retos y sus medallas
+  Album.astro                álbum compartido de Google Fotos
+  Faq.astro                  preguntas frecuentes e IBAN de los regalos
   Pie.astro                  ilustración y firma
+src/data/pokedex.ts          huecos de la Pokédex, gimnasios y preguntas frecuentes
 src/lib/googleForm.ts        mapeo y envío al Google Form
+src/lib/pokedex.ts           identidad y envío de las capturas
+src/lib/medallas.ts          medallas de los gimnasios en localStorage
+src/lib/contacto.ts          codificación de teléfonos e IBAN
 src/assets/                  PNG originales (Astro los optimiza a WebP)
 ```
+
+Todas las pantallas viven en la misma página y se turnan sin recargar: la
+navegación está en `Entrada.astro`, y cada vista se enlaza por su hash
+(`/#gimnasios`, `/#faq`...).
 
 Las fuentes (`Cormorant Garamond`, `Pinyon Script`) van **autoalojadas** vía
 `@fontsource`, para no depender de fonts.gstatic.com en móvil.

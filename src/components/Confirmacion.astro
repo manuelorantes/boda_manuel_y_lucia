@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import eeveeMew from '../assets/eevee-mew.png';
+import habitacion from '../assets/habitacion.jpg';
 
 interface Props {
   /** La entrada VIP anade la pregunta de alojamiento */
@@ -100,6 +101,28 @@ const esVip = variante === 'vip';
         esVip && (
           <div class="paso" data-paso="lodging" hidden>
             <p class="pregunta">Tu estancia en Señorío de Nevada está incluida</p>
+            <div class="marco-foto">
+              <Image
+                src={habitacion}
+                alt="Habitación del Señorío de Nevada"
+                width={800}
+                loading="lazy"
+              />
+            </div>
+            <dl class="estancia">
+              <div>
+                <dt>Entrada a la habitación</dt>
+                <dd>Sábado 26 · 12:00 h</dd>
+              </div>
+              <div>
+                <dt>Salida</dt>
+                <dd>Domingo 27 · 12:00 h</dd>
+              </div>
+              <div>
+                <dt>Desayuno</dt>
+                <dd>Incluido</dd>
+              </div>
+            </dl>
             <p class="ayuda">¿Te quedarás a dormir la noche del 26?</p>
             <div class="opciones fila">
               <button type="button" class="opcion" data-accion="lodge" data-valor="si">
@@ -221,6 +244,53 @@ const esVip = variante === 'vip';
     margin: -8px 0 0;
     font-size: 15px;
     color: var(--texto-suave);
+  }
+
+  .marco-foto {
+    padding: 4px;
+    border: 1px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.55);
+  }
+
+  .marco-foto :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+  }
+
+  .estancia {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    font-size: 15px;
+    color: var(--texto-suave);
+  }
+
+  .estancia > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 0.5px solid rgba(163, 121, 42, 0.4);
+  }
+
+  /* La ultima fila cierra contra el texto de abajo, sin raya suelta. */
+  .estancia > div:last-child {
+    border-bottom: none;
+  }
+
+  .estancia dt {
+    flex: none;
+  }
+
+  .estancia dd {
+    margin: 0;
+    font-size: 17px;
+    color: var(--texto);
+    text-align: right;
   }
 
   .texto {

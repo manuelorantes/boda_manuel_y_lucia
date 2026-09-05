@@ -22,6 +22,12 @@ export interface Captura {
 
 const CLAVE_USUARIO = 'lm-pokedex-usuario';
 
+/**
+ * Donde viven las capturas en el movil. Se exporta porque la portada tambien
+ * las cuenta, para pintar el avance en el bloque TU POKEDEX.
+ */
+export const CLAVE_FOTOS = 'lm-pokedex';
+
 // --------------------------------------------------------------- identidad
 
 declare global {

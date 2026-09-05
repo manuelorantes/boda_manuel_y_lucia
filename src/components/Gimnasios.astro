@@ -1,5 +1,20 @@
 ---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
 import { GIMNASIOS } from '../data/pokedex';
+
+// Las ilustraciones se importan por glob y no una a una: asi un gimnasio cuya
+// imagen todavia no este en src/assets se queda sin dibujo en vez de romper el
+// build, igual que hace el comic de "Nuestra historia".
+const dibujos = import.meta.glob<{ default: ImageMetadata }>('../assets/*.png', { eager: true });
+
+const gimnasios = GIMNASIOS.map((g) => ({
+  ...g,
+  dibujo: g.imagen ? dibujos[`../assets/${g.imagen}.png`]?.default : undefined,
+}));
+
+// Los bloqueados no cuentan: la Liga se completa con los que estan abiertos.
+const abiertos = gimnasios.filter((g) => !g.bloqueado).length;
 ---
 
 <section class="vista gimnasios" data-vista="gimnasios" hidden>
@@ -24,22 +39,45 @@ import { GIMNASIOS } from '../data/pokedex';
   <div class="progreso">
     <div class="cabecera-progreso">
       <span class="epigrafe">MEDALLAS</span>
-      <span data-contador>0 / {GIMNASIOS.length}</span>
+      <span class="cuenta" data-contador>0 / {abiertos}</span>
     </div>
     <div class="barra-progreso"><div data-barra></div></div>
   </div>
 
   <div class="retos">
     {
-      GIMNASIOS.map((g) => (
-        <button class="reto" type="button" data-gimnasio={g.id} aria-pressed="false">
-          <span class="medalla"></span>
-          <span class="texto">
-            <span class="numero">{g.gimnasio}</span>
-            <span class="tarea">{g.reto}</span>
-          </span>
-          <span class="hecho">HECHO</span>
-        </button>
+      gimnasios.map((g) => (
+        <div class="reto" data-gimnasio={g.id} data-bloqueado={g.bloqueado ? '' : undefined}>
+          <div class="cabecera">
+            <button
+              class="medalla"
+              type="button"
+              aria-pressed="false"
+              aria-label={`Marcar la medalla de ${g.reto}`}
+              disabled={g.bloqueado}
+            >
+              {g.bloqueado ? <span class="candado" /> : <span class="gema" />}
+            </button>
+
+            <button class="resumen" type="button" aria-expanded="false" aria-controls={`gym-${g.id}`}>
+              <span class="texto">
+                <span class="numero">{g.gimnasio}</span>
+                <span class="tarea">{g.reto}</span>
+              </span>
+              <span class="marca">{g.bloqueado ? 'PRÓXIMAMENTE' : 'HECHO'}</span>
+              <span class="chevron" />
+            </button>
+          </div>
+
+          <div class="detalle" id={`gym-${g.id}`} hidden>
+            {g.dibujo && (
+              <div class="dibujo">
+                <Image src={g.dibujo} alt="" width={300} loading="lazy" />
+              </div>
+            )}
+            <p class="descripcion">{g.descripcion}</p>
+          </div>
+        </div>
       ))
     }
   </div>
@@ -59,6 +97,22 @@ import { GIMNASIOS } from '../data/pokedex';
     <a class="boton-solido" href="#" data-ir-a="invitacion">Volver a la invitación</a>
   </div>
 </section>
+
+<noscript>
+  <!--
+    Sin JavaScript no hay desplegable ni medallas que marcar, pero el texto del
+    lider de cada gimnasio se lee igual: es lo que explica el reto.
+  -->
+  <style>
+    .gimnasios .detalle[hidden] {
+      display: flex !important;
+    }
+
+    .gimnasios .chevron {
+      display: none;
+    }
+  </style>
+</noscript>
 
 <style>
   .gimnasios {
@@ -132,12 +186,13 @@ import { GIMNASIOS } from '../data/pokedex';
 
   .normas {
     position: relative;
-    margin: 0;
-    padding: 0 10px;
+    margin: 0 10px;
+    padding: 16px;
+    border: 1px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.55);
     font-size: 16px;
     line-height: 1.5;
     text-align: center;
-    color: var(--texto-suave);
     text-wrap: pretty;
   }
 
@@ -153,8 +208,6 @@ import { GIMNASIOS } from '../data/pokedex';
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    font-size: 15px;
-    color: var(--dorado-oscuro);
   }
 
   .epigrafe {
@@ -163,57 +216,140 @@ import { GIMNASIOS } from '../data/pokedex';
     color: var(--dorado-oscuro);
   }
 
+  .cuenta {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
   .barra-progreso {
-    height: 4px;
+    height: 8px;
     border: 0.5px solid var(--dorado);
-    background: transparent;
+    background: rgba(255, 250, 238, 0.6);
   }
 
   .barra-progreso div {
     width: 0;
     height: 100%;
     background: var(--dorado-oscuro);
-    transition: width 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
 
   .retos {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     padding: 0 10px;
   }
 
   .reto {
+    border: 1px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.55);
+    transition: background 0.3s;
+  }
+
+  .reto[data-hecho] {
+    background: rgba(138, 100, 35, 0.1);
+  }
+
+  /* Un reto sin anunciar sigue a la vista, pero se lee como apagado. */
+  .reto[data-bloqueado] {
+    opacity: 0.6;
+  }
+
+  .cabecera {
     display: flex;
     align-items: center;
-    gap: 12px;
-    width: 100%;
-    min-height: 62px;
-    padding: 10px 12px;
-    border: 1px solid var(--dorado);
+    gap: 14px;
+    min-height: 72px;
+    padding: 12px 14px;
+  }
+
+  .medalla {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1.5px solid var(--dorado);
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    transition:
+      background 0.3s,
+      transform 0.3s;
+  }
+
+  .reto[data-bloqueado] .medalla {
+    border-style: dashed;
+    cursor: default;
+  }
+
+  .reto[data-hecho] .medalla {
+    background: var(--dorado-oscuro);
+    transform: scale(1.08);
+  }
+
+  .gema {
+    width: 7px;
+    height: 7px;
+    background: var(--dorado);
+    transform: rotate(45deg);
+    transition: background 0.3s;
+  }
+
+  .reto[data-hecho] .gema {
+    background: var(--sobre-dorado);
+  }
+
+  /* Candado dibujado con dos cajas: arco arriba, cuerpo abajo. */
+  .candado {
+    position: relative;
+    width: 12px;
+    height: 14px;
+  }
+
+  .candado::before,
+  .candado::after {
+    content: '';
+    position: absolute;
+  }
+
+  .candado::before {
+    top: 0;
+    left: 2px;
+    width: 6px;
+    height: 7px;
+    border: 1.5px solid var(--dorado);
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+  }
+
+  .candado::after {
+    top: 6px;
+    left: 0;
+    width: 12px;
+    height: 8px;
+    background: var(--dorado);
+  }
+
+  .resumen {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0;
+    border: none;
     background: transparent;
     color: var(--texto);
     text-align: left;
     cursor: pointer;
-  }
-
-  .medalla {
-    flex: none;
-    width: 26px;
-    height: 26px;
-    border: 1.5px solid var(--dorado);
-    border-radius: 50%;
-    transition: background 0.25s;
-  }
-
-  .reto[aria-pressed='true'] {
-    background: rgba(163, 121, 42, 0.1);
-  }
-
-  .reto[aria-pressed='true'] .medalla {
-    background: var(--dorado-oscuro);
-    box-shadow: inset 0 0 0 3px var(--pergamino-claro);
   }
 
   .texto {
@@ -221,28 +357,83 @@ import { GIMNASIOS } from '../data/pokedex';
     flex: 1;
     flex-direction: column;
     gap: 3px;
+    min-width: 0;
   }
 
   .numero {
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 0.2em;
-    color: var(--dorado);
-  }
-
-  .tarea {
-    font-size: 16px;
-    line-height: 1.3;
-  }
-
-  .hecho {
-    flex: none;
-    font-size: 10px;
-    letter-spacing: 0.18em;
     color: var(--dorado-oscuro);
   }
 
-  .reto[aria-pressed='false'] .hecho {
+  .tarea {
+    font-size: 17px;
+    line-height: 1.3;
+  }
+
+  .reto[data-hecho] .tarea {
+    color: var(--dorado-oscuro);
+    text-decoration: line-through;
+  }
+
+  .marca {
+    flex: none;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--dorado-oscuro);
+  }
+
+  /* "HECHO" solo cuando lo esta; "PRÓXIMAMENTE" siempre, que no depende de nadie. */
+  .reto:not([data-hecho]):not([data-bloqueado]) .marca {
     visibility: hidden;
+  }
+
+  .reto[data-hecho] .marca {
+    animation: aparecer 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .chevron {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    margin: 0 4px;
+    border-right: 1px solid var(--dorado);
+    border-bottom: 1px solid var(--dorado);
+    transform: rotate(45deg);
+    transition: transform 0.3s;
+  }
+
+  .resumen[aria-expanded='true'] .chevron {
+    transform: rotate(225deg);
+  }
+
+  .detalle {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 14px 16px;
+    animation: aparecer 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .dibujo {
+    display: flex;
+    justify-content: center;
+  }
+
+  .dibujo :global(img) {
+    display: block;
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+  }
+
+  .descripcion {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--texto-suave);
+    text-wrap: pretty;
   }
 
   .campeon {
@@ -287,7 +478,7 @@ import { GIMNASIOS } from '../data/pokedex';
   @keyframes aparecer {
     from {
       opacity: 0;
-      transform: translateY(8px) scale(0.97);
+      transform: translateY(6px) scale(0.96);
     }
     to {
       opacity: 1;
@@ -296,10 +487,17 @@ import { GIMNASIOS } from '../data/pokedex';
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .campeon {
+    .campeon,
+    .detalle,
+    .reto[data-hecho] .marca {
       animation: none;
     }
-    .barra-progreso div {
+
+    .barra-progreso div,
+    .medalla,
+    .gema,
+    .chevron,
+    .reto {
       transition: none;
     }
   }
@@ -341,57 +539,89 @@ import { GIMNASIOS } from '../data/pokedex';
 </style>
 
 <script>
-  // Las medallas viven solo aqui: sin login y sin servidor, como se decidio.
-  // Si el invitado borra los datos del navegador, las pierde.
-  const CLAVE = 'lm-gimnasios';
+  import { CLAVE_MEDALLAS, leerMedallas, guardarMedallas } from '../lib/medallas';
 
   const seccion = document.querySelector<HTMLElement>('.gimnasios');
 
   if (seccion) {
-    const botones = [...seccion.querySelectorAll<HTMLButtonElement>('[data-gimnasio]')];
+    const retos = [...seccion.querySelectorAll<HTMLElement>('[data-gimnasio]')];
     const contador = seccion.querySelector<HTMLElement>('[data-contador]');
     const barra = seccion.querySelector<HTMLElement>('[data-barra]');
     const campeon = seccion.querySelector<HTMLElement>('[data-campeon]');
 
-    const leer = (): Record<string, boolean> => {
-      try {
-        return JSON.parse(localStorage.getItem(CLAVE) || '{}');
-      } catch {
-        return {};
-      }
-    };
+    // Los bloqueados no entran en la cuenta: la Liga se gana con los abiertos.
+    const abiertos = retos.filter((r) => r.dataset.bloqueado === undefined);
 
-    let conseguidas = leer();
+    let conseguidas = leerMedallas();
 
-    const guardar = () => {
-      try {
-        localStorage.setItem(CLAVE, JSON.stringify(conseguidas));
-      } catch {
-        // Incognito o almacenamiento lleno: se sigue jugando sin recordar.
-      }
-    };
+    // Los retos cambiaron de nombre al rediseno: lo que quedara guardado con
+    // los identificadores viejos ya no corresponde a ningun gimnasio, asi que
+    // se tira en vez de arrastrarlo para siempre.
+    const vigentes = new Set(retos.map((r) => r.dataset.gimnasio!));
+    const caducadas = Object.keys(conseguidas).filter((id) => !vigentes.has(id));
+    if (caducadas.length > 0) {
+      caducadas.forEach((id) => delete conseguidas[id]);
+      guardarMedallas(conseguidas);
+    }
 
     const pintar = () => {
-      const total = botones.length;
-      const hechas = botones.filter((b) => conseguidas[b.dataset.gimnasio!]).length;
+      const hechas = abiertos.filter((r) => conseguidas[r.dataset.gimnasio!]).length;
 
-      botones.forEach((boton) => {
-        boton.setAttribute('aria-pressed', String(!!conseguidas[boton.dataset.gimnasio!]));
+      abiertos.forEach((reto) => {
+        const hecha = !!conseguidas[reto.dataset.gimnasio!];
+        // El atributo manda el estilo de toda la tarjeta, no solo el del boton.
+        if (hecha) reto.dataset.hecho = '';
+        else delete reto.dataset.hecho;
+        reto.querySelector('.medalla')?.setAttribute('aria-pressed', String(hecha));
       });
 
-      if (contador) contador.textContent = `${hechas} / ${total}`;
-      if (barra) barra.style.width = `${(hechas / total) * 100}%`;
-      if (campeon) campeon.hidden = hechas !== total;
+      if (contador) contador.textContent = `${hechas} / ${abiertos.length}`;
+      if (barra) barra.style.width = `${(hechas / abiertos.length) * 100}%`;
+      if (campeon) campeon.hidden = hechas !== abiertos.length;
+
+      // El bloque LOS GIMNASIOS de la invitacion pinta el mismo numero. Se
+      // avisa desde aqui, que es quien sabe cuando cambia y ya ha limpiado lo
+      // que quedara guardado de la version anterior de los retos.
+      window.dispatchEvent(new CustomEvent('lm:avance'));
     };
 
-    botones.forEach((boton) => {
-      boton.addEventListener('click', () => {
-        const id = boton.dataset.gimnasio!;
+    retos.forEach((reto) => {
+      const medalla = reto.querySelector<HTMLButtonElement>('.medalla');
+      const resumen = reto.querySelector<HTMLButtonElement>('.resumen');
+      const detalle = reto.querySelector<HTMLElement>('.detalle');
+
+      medalla?.addEventListener('click', () => {
+        const id = reto.dataset.gimnasio!;
         if (conseguidas[id]) delete conseguidas[id];
         else conseguidas[id] = true;
-        guardar();
+        guardarMedallas(conseguidas);
         pintar();
       });
+
+      // Solo un desplegable abierto a la vez, como en el diseno: la lista es
+      // larga y con dos abiertos hay que hacer scroll a ciegas.
+      resumen?.addEventListener('click', () => {
+        const abierto = resumen.getAttribute('aria-expanded') === 'true';
+
+        retos.forEach((otro) => {
+          otro.querySelector('.resumen')?.setAttribute('aria-expanded', 'false');
+          const suyo = otro.querySelector<HTMLElement>('.detalle');
+          if (suyo) suyo.hidden = true;
+        });
+
+        if (!abierto) {
+          resumen.setAttribute('aria-expanded', 'true');
+          if (detalle) detalle.hidden = false;
+        }
+      });
+    });
+
+    // Otra pestana con la misma web abierta no debe quedarse con las medallas
+    // viejas: el evento solo llega a las pestanas que no hicieron el cambio.
+    window.addEventListener('storage', (evento) => {
+      if (evento.key !== CLAVE_MEDALLAS) return;
+      conseguidas = leerMedallas();
+      pintar();
     });
 
     pintar();

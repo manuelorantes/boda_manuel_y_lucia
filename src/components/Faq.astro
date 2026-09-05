@@ -1,0 +1,463 @@
+---
+import { PREGUNTAS } from '../data/pokedex';
+import { ofuscar, ofuscarObligatorio } from '../lib/contacto';
+
+// El numero de cuenta no esta en el repositorio, que es publico: entra en el
+// build desde una variable de entorno y se emite codificado, igual que los
+// telefonos. Si falta, el build se corta: la pregunta del regalo promete un
+// IBAN y publicarla sin el seria peor que no desplegar.
+const iban = ofuscarObligatorio(import.meta.env.IBAN, 'IBAN', 'Faq');
+
+const definidos = [
+  { nombre: 'Lucía', variable: 'TEL_LUCIA', telefono: import.meta.env.TEL_LUCIA },
+  { nombre: 'Manuel', variable: 'TEL_MANUEL', telefono: import.meta.env.TEL_MANUEL },
+];
+
+const faltan = definidos.filter((c) => !c.telefono).map((c) => c.variable);
+if (faltan.length > 0) {
+  throw new Error(
+    `[Faq] Faltan ${faltan.join(' y ')}. Crea un .env local (ver README) o define ` +
+      'los secretos del repositorio en Actions.',
+  );
+}
+
+const contactos = definidos.map((c) => ({
+  nombre: c.nombre,
+  codigo: ofuscar(c.telefono as string),
+}));
+---
+
+<section class="vista faq" data-vista="faq" hidden>
+  <div class="marco-exterior"></div>
+  <div class="marco-interior"></div>
+
+  <div class="barra">
+    <a class="volver" href="#" data-ir-a="invitacion">← Volver</a>
+    <span class="firma">LUCÍA &amp; MANUEL</span>
+  </div>
+
+  <div class="titulo">
+    <h2>Preguntas frecuentes</h2>
+    <p class="subtitulo">Toca una pregunta para ver la respuesta</p>
+  </div>
+
+  <div class="lista">
+    {
+      PREGUNTAS.map((p, i) => (
+        <div class="pregunta">
+          <button class="cabecera" type="button" aria-expanded="false" aria-controls={`faq-${i}`}>
+            <span>{p.q}</span>
+            <span class="chevron" />
+          </button>
+
+          <div class="respuesta" id={`faq-${i}`} hidden>
+            <p class="texto">{p.a}</p>
+
+            {p.iban && (
+              <div class="tarjeta-iban" data-iban={iban}>
+                <p class="epigrafe">IBAN</p>
+                <p class="numero" data-numero>
+                  ···· ···· ···· ···· ···· ····
+                </p>
+                <button class="copiar" type="button" data-copiar hidden>
+                  Copiar IBAN
+                </button>
+                <noscript>
+                  <p class="texto">
+                    Activa JavaScript para ver el número de cuenta, o pídenoslo por teléfono.
+                  </p>
+                </noscript>
+              </div>
+            )}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="escribenos">
+    <p>¿No encuentras tu respuesta? Escríbenos:</p>
+    <p class="telefonos">
+      {
+        contactos.map((c, i) => (
+          <>
+            {i > 0 && <span class="separador"> · </span>}
+            <a class="contacto" data-tel={c.codigo} aria-label={`Llamar a ${c.nombre}`}>
+              {c.nombre} <span class="numero-tel">··· ··· ···</span>
+            </a>
+          </>
+        ))
+      }
+    </p>
+  </div>
+
+  <div class="pie-vista">
+    <a class="boton-solido" href="#" data-ir-a="invitacion">Volver a la invitación</a>
+  </div>
+</section>
+
+<noscript>
+  <!--
+    Sin JavaScript el acordeon no se abre nunca, asi que las once respuestas
+    quedan a la vista de salida: se pierde el plegado, no el contenido.
+  -->
+  <style>
+    .faq .respuesta[hidden] {
+      display: flex !important;
+    }
+
+    .faq .chevron {
+      display: none;
+    }
+  </style>
+</noscript>
+
+<script>
+  import { revelar, telefonoParaLeer, ibanParaLeer } from '../lib/contacto';
+
+  const seccion = document.querySelector<HTMLElement>('.faq');
+
+  if (seccion) {
+    // ------------------------------------------------------------ acordeon
+    const preguntas = [...seccion.querySelectorAll<HTMLElement>('.pregunta')];
+
+    preguntas.forEach((pregunta) => {
+      const cabecera = pregunta.querySelector<HTMLButtonElement>('.cabecera')!;
+      const respuesta = pregunta.querySelector<HTMLElement>('.respuesta')!;
+
+      cabecera.addEventListener('click', () => {
+        const abierta = cabecera.getAttribute('aria-expanded') === 'true';
+
+        // Una sola abierta a la vez, como en el diseno: son once preguntas y
+        // con varias desplegadas se pierde el sitio.
+        preguntas.forEach((otra) => {
+          otra.querySelector('.cabecera')?.setAttribute('aria-expanded', 'false');
+          const suya = otra.querySelector<HTMLElement>('.respuesta');
+          if (suya) suya.hidden = true;
+        });
+
+        if (!abierta) {
+          cabecera.setAttribute('aria-expanded', 'true');
+          respuesta.hidden = false;
+        }
+      });
+    });
+
+    // ---------------------------------------------------------------- iban
+    const tarjeta = seccion.querySelector<HTMLElement>('[data-iban]');
+    const codigoIban = tarjeta?.dataset.iban;
+
+    if (tarjeta && codigoIban) {
+      try {
+        const iban = revelar(codigoIban);
+        const numero = tarjeta.querySelector<HTMLElement>('[data-numero]');
+        const copiar = tarjeta.querySelector<HTMLButtonElement>('[data-copiar]');
+
+        if (numero) numero.textContent = ibanParaLeer(iban);
+
+        // El boton nace oculto: sin JS, o sin portapapeles, no copiaria nada y
+        // seria un adorno que no responde. Aparece solo cuando puede cumplir;
+        // si no, el numero se queda en pantalla para copiarlo a mano.
+        if (copiar && navigator.clipboard) {
+          copiar.hidden = false;
+
+          let volverAlNormal: ReturnType<typeof setTimeout>;
+
+          const confirmar = () => {
+            copiar.textContent = 'Copiado';
+            copiar.dataset.copiado = '';
+            clearTimeout(volverAlNormal);
+            volverAlNormal = setTimeout(() => {
+              copiar.textContent = 'Copiar IBAN';
+              delete copiar.dataset.copiado;
+            }, 2000);
+          };
+
+          copiar.addEventListener('click', async () => {
+            try {
+              await navigator.clipboard.writeText(iban);
+              confirmar();
+            } catch {
+              // El navegador puede denegar el permiso. No se avisa de nada: el
+              // numero sigue en pantalla y se copia a mano.
+            }
+          });
+        }
+      } catch {
+        // Codigo corrupto: se quedan los puntos en vez de romper la pagina.
+      }
+    }
+
+    // ----------------------------------------------------------- telefonos
+    seccion.querySelectorAll<HTMLAnchorElement>('.contacto[data-tel]').forEach((enlace) => {
+      const codigo = enlace.dataset.tel;
+      if (!codigo) return;
+
+      try {
+        const tel = revelar(codigo);
+        enlace.href = `tel:${tel}`;
+        const numero = enlace.querySelector('.numero-tel');
+        if (numero) numero.textContent = telefonoParaLeer(tel);
+      } catch {
+        // Igual que arriba: mejor el marcador que una pagina rota.
+      }
+    });
+  }
+</script>
+
+<style>
+  .faq {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 100vh;
+    padding: 22px 18px 40px;
+  }
+
+  .marco-exterior,
+  .marco-interior {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .marco-exterior {
+    inset: 10px;
+    border: 1.5px solid var(--dorado);
+  }
+
+  .marco-interior {
+    inset: 15px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+  }
+
+  .barra {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 10px 0;
+  }
+
+  .volver {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 6px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .firma {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--dorado);
+  }
+
+  .titulo {
+    position: relative;
+    text-align: center;
+  }
+
+  .titulo h2 {
+    margin: 0;
+    font-family: var(--script);
+    font-size: 40px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
+  .subtitulo {
+    margin: 8px 0 0;
+    font-size: 15px;
+    color: var(--texto-suave);
+  }
+
+  .lista {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 0 10px;
+  }
+
+  .pregunta {
+    border-bottom: 0.5px solid rgba(163, 121, 42, 0.4);
+  }
+
+  .cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 56px;
+    padding: 12px 0;
+    border: none;
+    background: transparent;
+    color: var(--texto);
+    font-size: 18px;
+    line-height: 1.3;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .chevron {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    margin: 0 6px;
+    border-right: 1px solid var(--dorado);
+    border-bottom: 1px solid var(--dorado);
+    transform: rotate(45deg);
+    transition: transform 0.3s;
+  }
+
+  .cabecera[aria-expanded='true'] .chevron {
+    transform: rotate(225deg);
+  }
+
+  .respuesta {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 0 16px;
+    animation: aparecer 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .texto {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--texto-suave);
+    text-wrap: pretty;
+  }
+
+  .tarjeta-iban {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border: 1px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.55);
+  }
+
+  .epigrafe {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    color: var(--dorado-oscuro);
+  }
+
+  .numero {
+    margin: 0;
+    font-size: 17px;
+    letter-spacing: 0.04em;
+    color: var(--texto);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .copiar {
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid var(--dorado-oscuro);
+    background: transparent;
+    color: var(--dorado-oscuro);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .copiar[data-copiado] {
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+  }
+
+  .escribenos {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 10px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--texto-suave);
+    text-align: center;
+  }
+
+  .escribenos p {
+    margin: 0;
+  }
+
+  .telefonos {
+    white-space: nowrap;
+  }
+
+  .contacto {
+    color: var(--texto);
+  }
+
+  .contacto[href] {
+    cursor: pointer;
+  }
+
+  .numero-tel {
+    color: var(--dorado-oscuro);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .separador {
+    color: var(--dorado);
+  }
+
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .respuesta {
+      animation: none;
+    }
+
+    .chevron,
+    .copiar {
+      transition: none;
+    }
+  }
+
+  .pie-vista {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-top: 6px;
+  }
+
+  .boton-solido {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0 28px;
+    border: 1px solid var(--dorado-oscuro);
+    background: var(--dorado-oscuro);
+    color: var(--sobre-dorado);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .boton-solido:hover {
+    color: var(--sobre-dorado);
+  }
+</style>

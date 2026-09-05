@@ -47,9 +47,24 @@ import { ALBUM_URL } from '../config';
       <li><span class="numero">2</span><span>Sube tantas como quieras, también los vídeos.</span></li>
       <li>
         <span class="numero">3</span>
-        <span>Guarda esta página: después de la boda publicaremos aquí nuestra selección.</span>
+        <span>Guarda este QR: tras la boda publicaremos aquí nuestra selección.</span>
       </li>
     </ol>
+  </div>
+
+  {/*
+    Hueco reservado: el dia despues de la boda estas tres casillas se cambian
+    por las fotos elegidas. Se deja a la vista para que el invitado sepa que
+    merece la pena volver, que es justo lo que le pide el paso 3.
+  */}
+  <div class="despues">
+    <p class="epigrafe">DESPUÉS DE LA BODA</p>
+    <div class="rejilla" aria-hidden="true">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+    <p class="letra-pequena">Aquí aparecerán nuestras fotos favoritas del día.</p>
   </div>
 
   <div class="pie-vista">
@@ -197,6 +212,32 @@ import { ALBUM_URL } from '../config';
   .pasos {
     position: relative;
     padding: 0 10px;
+  }
+
+  .despues {
+    position: relative;
+    margin: 0 10px;
+    padding: 16px;
+    border: 1px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.55);
+    text-align: center;
+  }
+
+  .despues .rejilla {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .despues .rejilla div {
+    aspect-ratio: 1;
+    border: 0.5px dashed var(--dorado);
+    background: repeating-linear-gradient(
+      135deg,
+      rgba(163, 121, 42, 0.1) 0 6px,
+      transparent 6px 12px
+    );
   }
 
   .epigrafe {

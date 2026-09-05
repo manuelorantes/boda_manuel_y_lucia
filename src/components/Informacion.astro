@@ -1,15 +1,21 @@
 ---
+import { Image } from 'astro:assets';
+// El fichero es WebP aunque el diseno lo entregue como .jpg: se guarda con su
+// extension real para que Astro no tenga que adivinar el formato.
+import senorio from '../assets/senorio.webp';
+import { ofuscar } from '../lib/contacto';
+import { GIMNASIOS, HUECOS } from '../data/pokedex';
+
 const MAPA = 'https://maps.app.goo.gl/KQpEZoszp1jsFZWA9';
+
+// Totales de los dos juegos, para que el script pueda calcular el porcentaje
+// sin volver a importar las listas enteras al navegador.
+const HUECOS_TOTALES = HUECOS.length;
+const MEDALLAS_TOTALES = GIMNASIOS.filter((g) => !g.bloqueado).length;
 
 // Los telefonos no viven en el repositorio: entran en tiempo de build desde
 // variables de entorno (.env en local, secretos de Actions en CI). Ademas se
-// emiten codificados, para que quien rastree el HTML publicado no se los lleve
-// en texto plano; el numero se recompone en el navegador.
-//
-// Esto disuade a los rastreadores automaticos, no oculta el numero: la web es
-// publica y cualquiera que mire con calma puede deshacer la codificacion.
-const ofuscar = (tel: string) => btoa([...tel.trim()].reverse().join(''));
-
+// emiten codificados; ver src/lib/contacto.ts.
 const definidos = [
   { nombre: 'Lucía', variable: 'TEL_LUCIA', telefono: import.meta.env.TEL_LUCIA },
   { nombre: 'Manuel', variable: 'TEL_MANUEL', telefono: import.meta.env.TEL_MANUEL },
@@ -53,6 +59,9 @@ const contactos = definidos.map((c) => ({
       Nevada al fondo. Ese día dispondremos de la totalidad del espacio. Incluye parking para todos
       los invitados.
     </p>
+    <div class="marco-foto">
+      <Image src={senorio} alt="Señorío de Nevada" width={800} loading="lazy" />
+    </div>
   </div>
 
   <div class="bloque">
@@ -68,6 +77,14 @@ const contactos = definidos.map((c) => ({
     <p class="detalle">
       ¡Hazte con todos! Fotografíate con los invitados y completa tu colección.
     </p>
+    {/* Solo aparece cuando ya hay algo que contar; lo rellena el script */}
+    <div class="avance" data-avance="pokedex" data-total={HUECOS_TOTALES} hidden>
+      <div class="cabecera-avance">
+        <span data-etiqueta></span>
+        <span class="cifra" data-cifra></span>
+      </div>
+      <div class="barra-avance"><div data-barra></div></div>
+    </div>
     <a class="boton" href="#pokedex" data-ir-a="pokedex">Abrir tu Pokédex</a>
   </div>
 
@@ -76,13 +93,20 @@ const contactos = definidos.map((c) => ({
     <p class="detalle">
       Retos del día. Consigue todas las medallas y conviértete en campeón de la Liga.
     </p>
+    <div class="avance" data-avance="gimnasios" data-total={MEDALLAS_TOTALES} hidden>
+      <div class="cabecera-avance">
+        <span data-etiqueta>Medallas</span>
+        <span class="cifra" data-cifra></span>
+      </div>
+      <div class="barra-avance"><div data-barra></div></div>
+    </div>
     <a class="boton" href="#gimnasios" data-ir-a="gimnasios">Ver los retos</a>
   </div>
 
   <div class="bloque">
     <h2>VUESTRAS FOTOS</h2>
     <p class="detalle">
-      Sube las fotos que hagas al álbum compartido: aquí publicaremos las mejores.
+      Sube las fotos que hagas al álbum compartido y guarda el QR: aquí publicaremos las mejores.
     </p>
     <a class="boton" href="#album" data-ir-a="album">Ir al álbum</a>
   </div>
@@ -90,6 +114,10 @@ const contactos = definidos.map((c) => ({
   <div class="bloque">
     <h2>DRESS CODE</h2>
     <p class="dato">Etiqueta</p>
+    <p class="parrafo pegado">
+      Ropa elegante para una fiesta pero cómoda para que podáis disfrutar. Se admite cualquier
+      color, sobre todo los navideños. No se admite color blanco (nos ha obligado la sociedad).
+    </p>
   </div>
 
   <div class="bloque">
@@ -113,15 +141,12 @@ const contactos = definidos.map((c) => ({
 </section>
 
 <script>
-  // Deshace la codificacion del build (base64 de la cadena invertida) y monta
-  // el enlace real. Se ejecuta en el navegador, asi que el numero nunca aparece
-  // en el HTML que se sirve.
-  const revelar = (codigo: string) => [...atob(codigo)].reverse().join('');
+  import { revelar, telefonoParaLeer } from '../lib/contacto';
+  import { CLAVE_FOTOS } from '../lib/pokedex';
+  import { leerMedallas } from '../lib/medallas';
 
-  // +34600123456 -> 600 123 456
-  const paraLeer = (tel: string) =>
-    tel.replace(/^\+34/, '').replace(/(\d{3})(?=\d)/g, '$1 ').trim();
-
+  // Deshace la codificacion del build y monta el enlace real. Se ejecuta en el
+  // navegador, asi que el numero nunca aparece en el HTML que se sirve.
   document.querySelectorAll<HTMLAnchorElement>('.contacto[data-tel]').forEach((enlace) => {
     const codigo = enlace.dataset.tel;
     if (!codigo) return;
@@ -130,11 +155,74 @@ const contactos = definidos.map((c) => ({
       const tel = revelar(codigo);
       enlace.href = `tel:${tel}`;
       const numero = enlace.querySelector('.numero');
-      if (numero) numero.textContent = paraLeer(tel);
+      if (numero) numero.textContent = telefonoParaLeer(tel);
     } catch {
       // Codigo corrupto: se deja el marcador de puntos en lugar de romper la pagina.
     }
   });
+
+  // ------------------------------------------------- avance de los dos juegos
+  //
+  // El diseno ata estas barras a haber iniciado sesion, pero aqui los
+  // gimnasios no piden cuenta, asi que la regla es otra y vale para los dos:
+  // se ensenan cuando hay algo que ensenar. Un "0 %" nada mas abrir la
+  // invitacion seria ruido, y ademas delataria el juego a quien aun no ha
+  // entrado.
+  const contarFotos = () => {
+    try {
+      const datos: unknown = JSON.parse(localStorage.getItem(CLAVE_FOTOS) || '{}');
+      return datos && typeof datos === 'object' ? Object.keys(datos).length : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const pintarAvance = (
+    nombre: string,
+    hechos: number,
+    // La Pokedex se cuenta en porcentaje y los gimnasios en medallas, igual
+    // que dentro de cada pantalla: la cifra grande tiene que decir lo mismo
+    // aqui y alli para que no parezcan dos marcadores distintos.
+    formato: (hechos: number, total: number) => { etiqueta: string; cifra: string },
+  ) => {
+    const bloque = document.querySelector<HTMLElement>(`[data-avance="${nombre}"]`);
+    if (!bloque) return;
+
+    const total = Number(bloque.dataset.total) || 0;
+    if (hechos <= 0 || total <= 0) {
+      bloque.hidden = true;
+      return;
+    }
+
+    const { etiqueta, cifra } = formato(hechos, total);
+    const destinoEtiqueta = bloque.querySelector<HTMLElement>('[data-etiqueta]');
+    const destinoCifra = bloque.querySelector<HTMLElement>('[data-cifra]');
+    const barra = bloque.querySelector<HTMLElement>('[data-barra]');
+
+    if (destinoEtiqueta) destinoEtiqueta.textContent = etiqueta;
+    if (destinoCifra) destinoCifra.textContent = cifra;
+    if (barra) barra.style.width = `${Math.round((hechos / total) * 100)}%`;
+    bloque.hidden = false;
+  };
+
+  const refrescar = () => {
+    pintarAvance('pokedex', contarFotos(), (hechos, total) => ({
+      etiqueta: `${hechos} de ${total} atrapados`,
+      cifra: `${Math.round((hechos / total) * 100)}%`,
+    }));
+
+    pintarAvance('gimnasios', Object.values(leerMedallas()).filter(Boolean).length, (h, t) => ({
+      etiqueta: 'Medallas',
+      cifra: `${h} / ${t}`,
+    }));
+  };
+
+  refrescar();
+
+  // Las vistas del juego y la invitacion son la misma pagina, asi que volver
+  // de la Pokedex no recarga nada. Los propios juegos avisan cuando cambia su
+  // avance, y ese aviso llega tambien mientras su pantalla esta oculta.
+  window.addEventListener('lm:avance', refrescar);
 </script>
 
 <style>
@@ -194,12 +282,72 @@ const contactos = definidos.map((c) => ({
     color: var(--dorado-oscuro);
   }
 
+  /* Bajo un titular corto como "Etiqueta" el hueco de 12px se abre demasiado. */
+  .parrafo.pegado {
+    margin-top: 4px;
+  }
+
   .parrafo {
     margin: 12px 0 0;
     font-size: 16px;
     line-height: 1.5;
     color: var(--texto-suave);
     text-wrap: pretty;
+  }
+
+  .marco-foto {
+    margin-top: 14px;
+    padding: 5px;
+    border: 1px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.55);
+  }
+
+  .marco-foto :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+  }
+
+  .avance {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .cabecera-avance {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 14px;
+    color: var(--texto-suave);
+  }
+
+  .cifra {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dorado-oscuro);
+  }
+
+  .barra-avance {
+    height: 6px;
+    border: 0.5px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.6);
+  }
+
+  .barra-avance div {
+    width: 0;
+    height: 100%;
+    background: var(--dorado-oscuro);
+    transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .barra-avance div {
+      transition: none;
+    }
   }
 
   .contactos {

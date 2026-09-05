@@ -75,15 +75,174 @@ export interface Gimnasio {
   id: string;
   gimnasio: string;
   reto: string;
+  /** Texto largo del lider del gimnasio, dentro del desplegable. */
+  descripcion: string;
+  /**
+   * Fichero PNG en src/assets, sin extension. Opcional: los gimnasios
+   * bloqueados no tienen ilustracion, y los que la tienen degradan a solo
+   * texto si la imagen todavia no esta en el repositorio.
+   */
+  imagen?: string;
+  /**
+   * Reto sin anunciar. Se ve en la lista, pero no se puede marcar y no cuenta
+   * para el total: la Liga se completa con los seis abiertos.
+   */
+  bloqueado?: boolean;
 }
 
+const POR_DESBLOQUEAR =
+  'Este gimnasio abrirá sus puertas más adelante. Vuelve a consultar la web cuando se acerque el ' +
+  'gran día.';
+
 export const GIMNASIOS: Gimnasio[] = [
-  { id: 'novios', gimnasio: 'GIMNASIO 1', reto: 'Hazte una foto con los novios' },
-  { id: 'baile', gimnasio: 'GIMNASIO 2', reto: 'Baila con alguien que no conocías' },
-  { id: 'brindis', gimnasio: 'GIMNASIO 3', reto: 'Brinda con alguien de la otra familia' },
-  { id: 'cancion', gimnasio: 'GIMNASIO 4', reto: 'Canta tu placer culpable a viva voz' },
-  { id: 'abuelos', gimnasio: 'GIMNASIO 5', reto: 'Saca a bailar a la persona más mayor de tu mesa' },
-  { id: 'foto', gimnasio: 'GIMNASIO 6', reto: 'Consigue una foto de grupo con toda tu mesa' },
-  { id: 'eevee', gimnasio: 'GIMNASIO 7', reto: 'Encuentra a Eevee y Mew escondidos en la boda' },
-  { id: 'fiesta', gimnasio: 'GIMNASIO 8', reto: 'Aguanta hasta la última canción' },
+  {
+    id: 'smeargle',
+    gimnasio: 'GIMNASIO 1',
+    reto: 'Poké-Artistas Avanzados',
+    imagen: 'smeargle',
+    descripcion:
+      '«Un Smeargle solitario no puede terminar su obra maestra. Se requiere la colaboración de ' +
+      'toda la región. ¡Acércate al lienzo y deja tu huella! Ya sea una línea abstracta o un ' +
+      'dibujo simple, vuestra creatividad combinada formará el cuadro legendario de esta unión. ' +
+      '¿Estás listo para usar tu movimiento "Esquema"?»',
+  },
+  {
+    id: 'recuerdo',
+    gimnasio: 'GIMNASIO 2',
+    reto: 'Pokédex de recuerdo',
+    imagen: 'rotom',
+    descripcion:
+      '«Se ha descubierto un nuevo Pokémon legendario: ¡La Felicidad Matrimonial! Tu misión es ' +
+      'documentarlo. Captura tu sonrisa con la Polaroid, pégala en la carta Pokémon y escribe tu ' +
+      'ataque más potente (una dedicatoria) por detrás. Necesitamos completar esta Pokédex para ' +
+      'que las futuras generaciones conozcan esta historia.»',
+  },
+  {
+    id: 'karaoke',
+    gimnasio: 'GIMNASIO 3',
+    reto: 'El Canto del Jigglypuff (sin dormirnos)',
+    imagen: 'jigglypuff',
+    descripcion:
+      '«¿Crees que tienes un vozarrón como el de un Exploud o la gracia de un Jigglypuff? ' +
+      '¡Demuéstralo en el escenario! Para conseguir esta medalla, debes subir al karaoke y cantar ' +
+      'una canción con pasión. Tu energía debe ser tan alta que incluso un Snorlax se levantaría a ' +
+      'bailar.»',
+  },
+  {
+    id: 'delibird',
+    gimnasio: 'GIMNASIO 4',
+    reto: 'El Festival de Invierno de Ciudad Mayólica',
+    imagen: 'delibird',
+    descripcion:
+      '«Se rumorea que hay invitados entrenados por Delibird en esta boda. ¿Eres uno de ellos? Si ' +
+      'has traído un detalle navideño escondido entre tu outfit, ¡es hora de revelarlo al Líder ' +
+      'del Gimnasio (u organizador)! Demuestra que tienes espíritu festivo incluso en los momentos ' +
+      'más elegantes.»',
+  },
+  {
+    id: 'sudowoodo',
+    gimnasio: 'GIMNASIO 5',
+    reto: '¡Hazte con Todos (los que están en la sala)!',
+    imagen: 'sudowoodo',
+    descripcion:
+      '«Varios Pokémon salvajes se han colado en la recepción y se están escondiendo. Son tímidos, ' +
+      'pero un buen entrenador sabe dónde buscar. Encuentra al menos a 3 de ellos por la ' +
+      'habitación para demostrar tu agudeza visual. ¡No olvides reportar tu captura!»',
+  },
+  {
+    id: 'alakazam',
+    gimnasio: 'GIMNASIO 6',
+    reto: 'El Desafío Intelectual de Ciudad Luminalia',
+    imagen: 'alakazam',
+    descripcion:
+      '«Un Alakazam ha bloqueado el camino con puzles mentales. Solo los entrenadores con gran ' +
+      'intelecto podrán pasar. Sé el primero en resolver los acertijos que se plantearán. Este ' +
+      'desafío requiere paciencia y una mente fría. ¿Tienes la Inteligencia suficiente para esta ' +
+      'medalla?»',
+  },
+  {
+    id: 'locked7',
+    gimnasio: 'GIMNASIO 7',
+    reto: 'Reto por desbloquear',
+    bloqueado: true,
+    descripcion: POR_DESBLOQUEAR,
+  },
+  {
+    id: 'locked8',
+    gimnasio: 'GIMNASIO 8',
+    reto: 'Reto por desbloquear',
+    bloqueado: true,
+    descripcion: POR_DESBLOQUEAR,
+  },
+];
+
+/**
+ * Las preguntas frecuentes.
+ *
+ * La del regalo lleva `iban: true`: es la unica que pinta el bloque con el
+ * numero de cuenta, que no vive aqui sino en una variable de entorno (ver
+ * src/components/Faq.astro).
+ */
+export interface Pregunta {
+  q: string;
+  a: string;
+  iban?: boolean;
+}
+
+export const PREGUNTAS: Pregunta[] = [
+  {
+    q: '¿Hasta cuándo puedo confirmar?',
+    a: 'Hasta el 30 de noviembre de 2026. Si algo cambia después, escríbenos directamente.',
+  },
+  {
+    q: '¿Puedo llevar acompañante?',
+    a: 'Indícalo en el formulario de confirmación, con su nombre y apellidos, y contamos con él o ella.',
+  },
+  {
+    q: '¿Pueden venir niños?',
+    a: 'Sí. Dinos cuántos y sus nombres en el formulario para preparar su menú y su sitio.',
+  },
+  {
+    q: '¿Qué me pongo?',
+    a:
+      'Etiqueta: ropa elegante para una fiesta pero cómoda para disfrutar. Cualquier color, sobre ' +
+      'todo los navideños. No se admite el blanco.',
+  },
+  {
+    q: '¿Hay parking?',
+    a: 'Sí, el Señorío de Nevada incluye parking para todos los invitados.',
+  },
+  {
+    q: '¿Tengo alguna alergia o intolerancia, qué hago?',
+    a: 'Cuéntanoslo en el formulario, también las de tus acompañantes, y lo trasladamos a cocina.',
+  },
+  {
+    q: '¿Habrá menú vegetariano?',
+    a: 'Sí. Indícanoslo en la parte de alergias e intolerancias del formulario y no habrá ningún problema.',
+  },
+  {
+    q: '¿Habrá recena?',
+    a:
+      'Sí. A media fiesta habrá recena para recuperar fuerzas y seguir bailando hasta la última ' +
+      'canción, así que no os preocupéis por el hambre.',
+  },
+  {
+    q: '¿Cómo podemos haceros un regalo?',
+    a:
+      'Lo más importante para nosotros es celebrar nuestro día junto a vosotros. Si queréis ' +
+      'contribuir a nuestras futuras aventuras con un detalle, podéis hacerlo aquí:',
+    iban: true,
+  },
+  {
+    q: '¿Necesito iniciar sesión para algo?',
+    a:
+      'Solo para la Pokédex, que guarda tus capturas y las envía a nuestro nombre. Confirmar ' +
+      'asistencia, los gimnasios y ver la información no requieren ninguna cuenta.',
+  },
+  {
+    q: '¿Dónde subo mis fotos de la boda?',
+    a:
+      'En el álbum compartido, desde el apartado "Vuestras fotos". Guarda el QR: ahí publicaremos ' +
+      'nuestra selección después.',
+  },
 ];

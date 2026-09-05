@@ -22,22 +22,24 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    # Los telefonos son secretos del entorno github-pages, no del repositorio.
-    # El job tiene que declarar el entorno para poder leerlos; sin esto llegan
-    # vacios y el build aborta al renderizar el bloque CONTACTO.
+    # Los telefonos y el IBAN son secretos del entorno github-pages, no del
+    # repositorio. El job tiene que declarar el entorno para poder leerlos; sin
+    # esto llegan vacios y el build aborta al renderizar CONTACTO o la FAQ.
     environment: github-pages
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Los telefonos no estan en el repositorio: se escriben aqui desde los
-      # secretos para que Astro los lea igual que el .env local. El fichero solo
-      # existe dentro del runner, que se destruye al terminar el job.
+      # Ni los telefonos ni el numero de cuenta estan en el repositorio: se
+      # escriben aqui desde los secretos para que Astro los lea igual que el
+      # .env local. El fichero solo existe dentro del runner, que se destruye
+      # al terminar el job.
       - name: Write .env from secrets
         run: |
           {
             echo "TEL_LUCIA=${{ secrets.TEL_LUCIA }}"
             echo "TEL_MANUEL=${{ secrets.TEL_MANUEL }}"
+            echo "IBAN=${{ secrets.IBAN }}"
           } > .env
 
       - name: Install, build and upload site

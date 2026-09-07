@@ -120,20 +120,75 @@ const { titulo, variante } = Astro.props;
 
   const esVista = (valor: string): valor is Vista => VISTAS.includes(valor as Vista);
 
-  const mostrar = (vista: Vista, subirArriba: boolean) => {
-    for (const [nombre, seccion] of secciones) {
-      seccion.hidden = nombre !== vista;
-    }
-    if (subirArriba) window.scrollTo(0, 0);
-  };
-
   const desdeHash = (): Vista => {
     const hash = window.location.hash.replace('#', '');
     return esVista(hash) ? hash : 'invitacion';
   };
 
-  // Estado inicial: respeta el hash con el que se llega.
-  mostrar(desdeHash(), false);
+  // ------------------------------------------------------- altura de cada vista
+  //
+  // Todas las pantallas son la misma pagina, asi que al turnarlas el scroll no
+  // se mueve solo: sin esto, volver de los gimnasios te dejaba al principio de
+  // la invitacion y habia que bajar otra vez hasta donde estabas. Cada vista
+  // recuerda su altura y se recupera al volver a ella.
+  //
+  // En sessionStorage y no en una variable suelta para que sobreviva a una
+  // recarga, que en el movil pasa sin querer mas de lo que parece. Muere al
+  // cerrar la pestana, que es justo lo que se quiere: entrar de nuevo por el QR
+  // empieza desde arriba.
+  const CLAVE_ALTURAS = 'lm-alturas';
+
+  const leerAlturas = (): Partial<Record<Vista, number>> => {
+    try {
+      const crudo = sessionStorage.getItem(CLAVE_ALTURAS);
+      const datos: unknown = crudo ? JSON.parse(crudo) : {};
+      return datos && typeof datos === 'object' ? (datos as Partial<Record<Vista, number>>) : {};
+    } catch {
+      return {};
+    }
+  };
+
+  const alturas = leerAlturas();
+  let visible: Vista = desdeHash();
+
+  const recordarAltura = () => {
+    alturas[visible] = window.scrollY;
+    try {
+      sessionStorage.setItem(CLAVE_ALTURAS, JSON.stringify(alturas));
+    } catch {
+      // Incognito o almacenamiento lleno: se sigue navegando sin recordar.
+    }
+  };
+
+  const mostrar = (vista: Vista) => {
+    for (const [nombre, seccion] of secciones) {
+      seccion.hidden = nombre !== vista;
+    }
+    visible = vista;
+  };
+
+  /** Cambia de pantalla guardando donde se estaba y recuperando donde se iba. */
+  const navegar = (vista: Vista) => {
+    recordarAltura();
+    mostrar(vista);
+    window.scrollTo(0, alturas[vista] ?? 0);
+  };
+
+  // El navegador tambien intenta restaurar el scroll por su cuenta, y como no
+  // sabe que aqui hay varias pantallas turnandose, deja la altura de una en
+  // otra. Mandamos nosotros.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+  // Estado inicial: respeta el hash con el que se llega. La altura se recupera
+  // en el siguiente fotograma, cuando el navegador ya ha medido la pantalla que
+  // acabamos de ensenar.
+  mostrar(visible);
+  const alturaInicial = alturas[visible];
+  if (alturaInicial) requestAnimationFrame(() => window.scrollTo(0, alturaInicial));
+
+  // Al recargar o cerrar, guardar donde se estaba. `pagehide` y no `unload`:
+  // es el unico que dispara de forma fiable en Safari de iOS.
+  window.addEventListener('pagehide', recordarAltura);
 
   document.querySelectorAll<HTMLElement>('[data-ir-a]').forEach((disparador) => {
     disparador.addEventListener('click', (evento) => {
@@ -148,13 +203,13 @@ const { titulo, variante } = Astro.props;
           ? window.location.pathname + window.location.search
           : `#${destino}`;
       history.pushState(null, '', url);
-      mostrar(destino, true);
+      navegar(destino);
     });
   });
 
   // popstate cubre atras/adelante del navegador. hashchange cubre el caso en
   // que el enlace se pulse antes de que este script llegue a engancharse: ahi
   // el ancla navega sola y solo cambia el hash.
-  window.addEventListener('popstate', () => mostrar(desdeHash(), true));
-  window.addEventListener('hashchange', () => mostrar(desdeHash(), true));
+  window.addEventListener('popstate', () => navegar(desdeHash()));
+  window.addEventListener('hashchange', () => navegar(desdeHash()));
 </script>

@@ -159,9 +159,12 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
         <div class="marco-tarjeta" />
         <p class="epigrafe se-busca" data-epigrafe>SE BUSCA</p>
         <div class="retrato">
-          {b.dibujo && (
-            <Image src={b.dibujo} alt={`Cartel de ${b.nombre}`} width={300} loading="lazy" />
-          )}
+          {/*
+            Sin `width`: los carteles miden poco mas de 200 px de ancho y
+            pedirle 300 a Astro solo los estiraria, pesando mas sin dar detalle.
+            Con su tamano propio, el CSS los baja a los 180 px de la ficha.
+          */}
+          {b.dibujo && <Image src={b.dibujo} alt={`Cartel de ${b.nombre}`} loading="lazy" />}
           <span class="sello grande" aria-hidden="true">
             <span class="sello-caja">¡Atrapado!</span>
           </span>

@@ -103,22 +103,16 @@ export interface Buscado {
   imagen?: string;
 }
 
-/**
- * Los ocho hermanos de Eevee, en el orden en que se pintan.
- *
- * De momento los ocho llevan el dibujo de Sudowoodo como marcador: cuando
- * lleguen los carteles de verdad basta con cambiar aqui el nombre del fichero,
- * uno por uno, sin tocar el componente.
- */
+/** Los ocho hermanos de Eevee, en el orden en que se pintan. */
 export const BUSCADOS: Buscado[] = [
-  { id: 'vaporeon', nombre: 'Vaporeon', imagen: 'sudowoodo' },
-  { id: 'jolteon', nombre: 'Jolteon', imagen: 'sudowoodo' },
-  { id: 'flareon', nombre: 'Flareon', imagen: 'sudowoodo' },
-  { id: 'espeon', nombre: 'Espeon', imagen: 'sudowoodo' },
-  { id: 'umbreon', nombre: 'Umbreon', imagen: 'sudowoodo' },
-  { id: 'leafeon', nombre: 'Leafeon', imagen: 'sudowoodo' },
-  { id: 'glaceon', nombre: 'Glaceon', imagen: 'sudowoodo' },
-  { id: 'sylveon', nombre: 'Sylveon', imagen: 'sudowoodo' },
+  { id: 'vaporeon', nombre: 'Vaporeon', imagen: 'vaporeon' },
+  { id: 'jolteon', nombre: 'Jolteon', imagen: 'jolteon' },
+  { id: 'flareon', nombre: 'Flareon', imagen: 'flareon' },
+  { id: 'espeon', nombre: 'Espeon', imagen: 'espeon' },
+  { id: 'umbreon', nombre: 'Umbreon', imagen: 'umbreon' },
+  { id: 'leafeon', nombre: 'Leafeon', imagen: 'leafeon' },
+  { id: 'glaceon', nombre: 'Glaceon', imagen: 'glaceon' },
+  { id: 'sylveon', nombre: 'Sylveon', imagen: 'sylveon' },
 ];
 
 export interface Gimnasio {

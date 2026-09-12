@@ -40,32 +40,28 @@ npm run preview  # sirve dist/ en local
 
 ### Variables de entorno
 
-Los teléfonos de contacto y el número de cuenta para los regalos **no están en
-el repositorio**, porque es público. Hay que crear un `.env` en la raíz (ya está
-en `.gitignore`):
+Los teléfonos de contacto **no están en el repositorio**, porque es público.
+Hay que crear un `.env` en la raíz (ya está en `.gitignore`):
 
 ```bash
 TEL_LUCIA=+34XXXXXXXXX
 TEL_MANUEL=+34XXXXXXXXX
-IBAN=ESXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-Los teléfonos en formato internacional y sin espacios; el IBAN también sin
-espacios. Si falta alguno **el build falla a propósito**: el bloque CONTACTO y
-la respuesta del regalo son contenido esencial, así que preferimos que un
-despliegue mal configurado se caiga y deje en pie la versión anterior, antes que
-publicar la invitación sin forma de contactar o con una FAQ que promete un IBAN
-que no aparece.
+Los teléfonos en formato internacional y sin espacios. Si falta alguno **el
+build falla a propósito**: el bloque CONTACTO es contenido esencial, así que
+preferimos que un despliegue mal configurado se caiga y deje en pie la versión
+anterior, antes que publicar la invitación sin forma de contactar.
 
 En CI los mismos valores llegan desde los secretos del entorno `github-pages`
-(Settings > Environments > github-pages, con esos tres nombres); el workflow
+(Settings > Environments > github-pages, con esos dos nombres); el workflow
 escribe el `.env` dentro del runner justo antes de construir.
 
 Además, ni `Informacion.astro` ni `Faq.astro` emiten los valores en claro en el
 HTML: `src/lib/contacto.ts` los codifica en build y los recompone en el
 navegador. Es una barrera contra rastreadores automáticos, **no** un secreto: la
-web es pública y quien mire el `data-tel` o el `data-iban` con calma puede
-deshacer la codificación.
+web es pública y quien mire el `data-tel` con calma puede deshacer la
+codificación.
 
 ## Estructura
 
@@ -83,7 +79,7 @@ src/components/
   Pokedex.astro              capturas de la boda (única pantalla con login)
   Gimnasios.astro            los ocho retos y sus medallas
   Album.astro                álbum compartido de Google Fotos
-  Faq.astro                  preguntas frecuentes e IBAN de los regalos
+  Faq.astro                  preguntas frecuentes
   Pie.astro                  ilustración y firma
 src/pages/panel.astro        panel de los novios (abrir y cerrar retos)
 src/data/pokedex.ts          huecos de la Pokédex, gimnasios y preguntas frecuentes
@@ -92,7 +88,7 @@ src/lib/appsScript.ts        transporte hacia el Apps Script (fotos y retos)
 src/lib/pokedex.ts           identidad y envío de las capturas
 src/lib/retos.ts             qué gimnasios están abiertos (lo manda el servidor)
 src/lib/medallas.ts          medallas de los gimnasios en localStorage
-src/lib/contacto.ts          codificación de teléfonos e IBAN
+src/lib/contacto.ts          codificación de los teléfonos
 src/assets/                  PNG originales (Astro los optimiza a WebP)
 ```
 

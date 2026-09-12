@@ -1,12 +1,6 @@
 ---
 import { PREGUNTAS } from '../data/pokedex';
-import { ofuscar, ofuscarObligatorio } from '../lib/contacto';
-
-// El numero de cuenta no esta en el repositorio, que es publico: entra en el
-// build desde una variable de entorno y se emite codificado, igual que los
-// telefonos. Si falta, el build se corta: la pregunta del regalo promete un
-// IBAN y publicarla sin el seria peor que no desplegar.
-const iban = ofuscarObligatorio(import.meta.env.IBAN, 'IBAN', 'Faq');
+import { ofuscar } from '../lib/contacto';
 
 const definidos = [
   { nombre: 'Lucía', variable: 'TEL_LUCIA', telefono: import.meta.env.TEL_LUCIA },
@@ -52,23 +46,6 @@ const contactos = definidos.map((c) => ({
 
           <div class="respuesta" id={`faq-${i}`} hidden>
             <p class="texto">{p.a}</p>
-
-            {p.iban && (
-              <div class="tarjeta-iban" data-iban={iban}>
-                <p class="epigrafe">IBAN</p>
-                <p class="numero" data-numero>
-                  ···· ···· ···· ···· ···· ····
-                </p>
-                <button class="copiar" type="button" data-copiar hidden>
-                  Copiar IBAN
-                </button>
-                <noscript>
-                  <p class="texto">
-                    Activa JavaScript para ver el número de cuenta, o pídenoslo por teléfono.
-                  </p>
-                </noscript>
-              </div>
-            )}
           </div>
         </div>
       ))
@@ -98,7 +75,7 @@ const contactos = definidos.map((c) => ({
 
 <noscript>
   <!--
-    Sin JavaScript el acordeon no se abre nunca, asi que las once respuestas
+    Sin JavaScript el acordeon no se abre nunca, asi que las diez respuestas
     quedan a la vista de salida: se pierde el plegado, no el contenido.
   -->
   <style>
@@ -113,7 +90,7 @@ const contactos = definidos.map((c) => ({
 </noscript>
 
 <script>
-  import { revelar, telefonoParaLeer, ibanParaLeer } from '../lib/contacto';
+  import { revelar, telefonoParaLeer } from '../lib/contacto';
 
   const seccion = document.querySelector<HTMLElement>('.faq');
 
@@ -128,7 +105,7 @@ const contactos = definidos.map((c) => ({
       cabecera.addEventListener('click', () => {
         const abierta = cabecera.getAttribute('aria-expanded') === 'true';
 
-        // Una sola abierta a la vez, como en el diseno: son once preguntas y
+        // Una sola abierta a la vez, como en el diseno: son diez preguntas y
         // con varias desplegadas se pierde el sitio.
         preguntas.forEach((otra) => {
           otra.querySelector('.cabecera')?.setAttribute('aria-expanded', 'false');
@@ -142,51 +119,6 @@ const contactos = definidos.map((c) => ({
         }
       });
     });
-
-    // ---------------------------------------------------------------- iban
-    const tarjeta = seccion.querySelector<HTMLElement>('[data-iban]');
-    const codigoIban = tarjeta?.dataset.iban;
-
-    if (tarjeta && codigoIban) {
-      try {
-        const iban = revelar(codigoIban);
-        const numero = tarjeta.querySelector<HTMLElement>('[data-numero]');
-        const copiar = tarjeta.querySelector<HTMLButtonElement>('[data-copiar]');
-
-        if (numero) numero.textContent = ibanParaLeer(iban);
-
-        // El boton nace oculto: sin JS, o sin portapapeles, no copiaria nada y
-        // seria un adorno que no responde. Aparece solo cuando puede cumplir;
-        // si no, el numero se queda en pantalla para copiarlo a mano.
-        if (copiar && navigator.clipboard) {
-          copiar.hidden = false;
-
-          let volverAlNormal: ReturnType<typeof setTimeout>;
-
-          const confirmar = () => {
-            copiar.textContent = 'Copiado';
-            copiar.dataset.copiado = '';
-            clearTimeout(volverAlNormal);
-            volverAlNormal = setTimeout(() => {
-              copiar.textContent = 'Copiar IBAN';
-              delete copiar.dataset.copiado;
-            }, 2000);
-          };
-
-          copiar.addEventListener('click', async () => {
-            try {
-              await navigator.clipboard.writeText(iban);
-              confirmar();
-            } catch {
-              // El navegador puede denegar el permiso. No se avisa de nada: el
-              // numero sigue en pantalla y se copia a mano.
-            }
-          });
-        }
-      } catch {
-        // Codigo corrupto: se quedan los puntos en vez de romper la pagina.
-      }
-    }
 
     // ----------------------------------------------------------- telefonos
     seccion.querySelectorAll<HTMLAnchorElement>('.contacto[data-tel]').forEach((enlace) => {
@@ -334,49 +266,6 @@ const contactos = definidos.map((c) => ({
     text-wrap: pretty;
   }
 
-  .tarjeta-iban {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-    padding: 12px 14px;
-    border: 1px solid var(--dorado);
-    background: rgba(255, 250, 238, 0.55);
-  }
-
-  .epigrafe {
-    margin: 0;
-    font-size: 11px;
-    letter-spacing: 0.24em;
-    color: var(--dorado-oscuro);
-  }
-
-  .numero {
-    margin: 0;
-    font-size: 17px;
-    letter-spacing: 0.04em;
-    color: var(--texto);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .copiar {
-    min-height: 40px;
-    padding: 0 16px;
-    border: 1px solid var(--dorado-oscuro);
-    background: transparent;
-    color: var(--dorado-oscuro);
-    font-size: 12px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-
-  .copiar[data-copiado] {
-    background: var(--dorado-oscuro);
-    color: var(--sobre-dorado);
-  }
-
   .escribenos {
     position: relative;
     display: flex;
@@ -430,8 +319,7 @@ const contactos = definidos.map((c) => ({
       animation: none;
     }
 
-    .chevron,
-    .copiar {
+    .chevron {
       transition: none;
     }
   }

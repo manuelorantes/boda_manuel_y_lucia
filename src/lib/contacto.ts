@@ -1,10 +1,10 @@
 /**
  * Datos personales que no viven en el repositorio.
  *
- * Los telefonos y el numero de cuenta entran en tiempo de build desde
- * variables de entorno (.env en local, secretos de Actions en CI) y se emiten
- * codificados, para que quien rastree el HTML publicado no se los lleve en
- * texto plano; el valor se recompone en el navegador.
+ * Los telefonos entran en tiempo de build desde variables de entorno (.env en
+ * local, secretos de Actions en CI) y se emiten codificados, para que quien
+ * rastree el HTML publicado no se los lleve en texto plano; el valor se
+ * recompone en el navegador.
  *
  * Esto disuade a los rastreadores automaticos, NO oculta el dato: la web es
  * publica y cualquiera que mire con calma puede deshacer la codificacion. Lo
@@ -24,24 +24,3 @@ export const telefonoParaLeer = (tel: string) =>
     .replace(/^\+34/, '')
     .replace(/(\d{3})(?=\d)/g, '$1 ')
     .trim();
-
-/** ES0000000000000000000000 -> ES00 0000 0000 0000 0000 0000 */
-export const ibanParaLeer = (iban: string) => iban.replace(/(.{4})/g, '$1 ').trim();
-
-/**
- * Lee una variable de entorno obligatoria y la devuelve ya codificada.
- *
- * Si falta, corta el build a proposito: mas vale que un despliegue mal
- * configurado falle y deje en pie la version anterior, antes que publicar la
- * invitacion sin forma de contactar o sin el numero de cuenta que la propia
- * pagina promete.
- */
-export function ofuscarObligatorio(valor: string | undefined, variable: string, donde: string) {
-  if (!valor) {
-    throw new Error(
-      `[${donde}] Falta ${variable}. Crea un .env local (ver README) o define el ` +
-        'secreto del repositorio en Actions.',
-    );
-  }
-  return ofuscar(valor);
-}

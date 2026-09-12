@@ -205,17 +205,10 @@ export const GIMNASIOS: Gimnasio[] = [
   },
 ];
 
-/**
- * Las preguntas frecuentes.
- *
- * La del regalo lleva `iban: true`: es la unica que pinta el bloque con el
- * numero de cuenta, que no vive aqui sino en una variable de entorno (ver
- * src/components/Faq.astro).
- */
+/** Las preguntas frecuentes. */
 export interface Pregunta {
   q: string;
   a: string;
-  iban?: boolean;
 }
 
 export const PREGUNTAS: Pregunta[] = [
@@ -254,13 +247,6 @@ export const PREGUNTAS: Pregunta[] = [
     a:
       'Sí. A media fiesta habrá recena para recuperar fuerzas y seguir bailando hasta la última ' +
       'canción, así que no os preocupéis por el hambre.',
-  },
-  {
-    q: '¿Cómo podemos haceros un regalo?',
-    a:
-      'Lo más importante para nosotros es celebrar nuestro día junto a vosotros. Si queréis ' +
-      'contribuir a nuestras futuras aventuras con un detalle, podéis hacerlo aquí:',
-    iban: true,
   },
   {
     q: '¿Necesito iniciar sesión para algo?',

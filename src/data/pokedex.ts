@@ -207,7 +207,8 @@ export const GIMNASIOS: Gimnasio[] = [
     descripcion:
       '«Los hermanos mayores de Eevee se han colado en la fiesta y se han escondido. Son tímidos, ' +
       'pero un buen entrenador sabe dónde buscar. ¡Encuéntralos y captúralos! ¿Quién será el ' +
-      'mejor entrenador? ¡No olvides reportar tu captura!»',
+      'mejor entrenador? No olvides reportar tu captura al novio para poder avisar a los demás ' +
+      'entrenadores.»',
     buscados: BUSCADOS,
   },
   {

@@ -88,10 +88,12 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         {
           BUSCADOS.map((b) => (
             <button class="captura" type="button" data-buscado={b.id} aria-pressed="false">
-              <span class="nombre-captura">{b.nombre}</span>
-              <span class="sello" aria-hidden="true">
-                <span class="sello-caja">¡Atrapado!</span>
+              <span class="cuadro">
+                <span class="sello" aria-hidden="true">
+                  <span class="sello-caja">¡Atrapado!</span>
+                </span>
               </span>
+              <span class="nombre-captura">{b.nombre}</span>
             </button>
           ))
         }
@@ -515,7 +517,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
   @media (prefers-reduced-motion: reduce) {
     .interruptor,
-    .captura,
+    .cuadro,
     .bola {
       transition: none;
     }
@@ -531,32 +533,43 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     gap: 8px;
   }
 
+  /*
+    Aqui el nombre va DEBAJO del cuadrado, no dentro como en la pantalla del
+    invitado. Es la diferencia que importa: en el panel el nombre es lo que hay
+    que leer para acertar a cual se suelta, y dentro se lo comeria el sello.
+  */
   .captura {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--dorado-oscuro);
+    cursor: pointer;
+  }
+
+  .cuadro {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     aspect-ratio: 1;
-    padding: 4px;
     border: 1px solid var(--dorado);
     background: rgba(255, 250, 238, 0.75);
-    color: var(--dorado-oscuro);
+    transition: background 0.3s;
+  }
+
+  .captura[aria-pressed='true'] .cuadro {
+    background: rgba(163, 121, 42, 0.08);
+  }
+
+  .nombre-captura {
     font-size: clamp(8px, 2.6vw, 11px);
     letter-spacing: 0.08em;
     line-height: 1.2;
     text-align: center;
     text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-
-  .captura[aria-pressed='true'] {
-    background: rgba(163, 121, 42, 0.08);
-    color: rgba(138, 100, 35, 0.45);
-  }
-
-  .nombre-captura {
-    position: relative;
   }
 
   .sello {

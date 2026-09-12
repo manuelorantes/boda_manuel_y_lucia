@@ -13,7 +13,7 @@
  * repositorio ni en el HTML. Sin ese correo, esto es una pantalla vacia.
  */
 import Layout from '../layouts/Layout.astro';
-import { GIMNASIOS } from '../data/pokedex';
+import { GIMNASIOS, BUSCADOS } from '../data/pokedex';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
@@ -79,6 +79,26 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         }
       </div>
 
+      <div class="cabecera-lista">
+        <span class="epigrafe">CAPTURAS · GIMNASIO 5</span>
+        <span data-cuenta-capturas></span>
+      </div>
+
+      <div class="capturas">
+        {
+          BUSCADOS.map((b) => (
+            <button class="captura" type="button" data-buscado={b.id} aria-pressed="false">
+              <span class="nombre-captura">{b.nombre}</span>
+              <span class="sello" aria-hidden="true">
+                <span class="sello-caja">¡Atrapado!</span>
+              </span>
+            </button>
+          ))
+        }
+      </div>
+
+      <p class="pie-capturas">Toca un Pokémon para marcarlo como atrapado o liberarlo.</p>
+
       <div class="acciones">
         <button class="boton-linea" type="button" data-todos="abrir">Activar todos</button>
         <button class="boton-linea" type="button" data-todos="cerrar">Bloquear todos</button>
@@ -97,7 +117,13 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 <script>
   import { identificarse, usuarioGuardado, cerrarSesion, type Usuario } from '../lib/pokedex';
   import { explicar } from '../lib/appsScript';
-  import { cargarRetos, cambiarRetos, type EstadoReto } from '../lib/retos';
+  import {
+    cargarRetos,
+    cambiarRetos,
+    cambiarBuscados,
+    type EstadoReto,
+    type EstadoBuscado,
+  } from '../lib/retos';
 
   const seccion = document.querySelector<HTMLElement>('.panel');
 
@@ -108,12 +134,15 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     });
 
     const filas = [...seccion.querySelectorAll<HTMLElement>('[data-reto]')];
+    const cuadrados = [...seccion.querySelectorAll<HTMLElement>('[data-buscado]')];
     const cuenta = seccion.querySelector<HTMLElement>('[data-cuenta]');
+    const cuentaCapturas = seccion.querySelector<HTMLElement>('[data-cuenta-capturas]');
     const quien = seccion.querySelector<HTMLElement>('[data-quien]');
     const aviso = seccion.querySelector<HTMLElement>('[data-aviso]');
 
     let usuario: Usuario | null = usuarioGuardado();
     let estados: EstadoReto[] = [];
+    let cazados: EstadoBuscado[] = [];
 
     const mostrar = (paso: string) => {
       for (const [nombre, elemento] of pasos) elemento.hidden = nombre !== paso;
@@ -148,6 +177,21 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       }
     };
 
+    const pintarCapturas = () => {
+      const atrapados = new Set(cazados.filter((c) => c.atrapado).map((c) => c.id));
+
+      cuadrados.forEach((cuadrado) => {
+        const cazado = atrapados.has(cuadrado.dataset.buscado!);
+        if (cazado) cuadrado.dataset.atrapado = '';
+        else delete cuadrado.dataset.atrapado;
+        cuadrado.setAttribute('aria-pressed', String(cazado));
+      });
+
+      if (cuentaCapturas) {
+        cuentaCapturas.textContent = `${atrapados.size} / ${cuadrados.length}`;
+      }
+    };
+
     /** Manda los cambios y se queda con lo que responda el servidor. */
     const cambiar = async (cambios: { id: string; bloqueado: boolean }[]) => {
       if (!usuario) return;
@@ -174,6 +218,41 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       pintar();
     };
 
+    /** Lo mismo que `cambiar`, pero para los Pokemon del reto 5. */
+    const atrapar = async (cambios: { id: string; atrapado: boolean }[]) => {
+      if (!usuario) return;
+      avisar('');
+
+      const previo = cazados;
+      const porCambio = new Map(cambios.map((c) => [c.id, c.atrapado]));
+      cazados = cazados.map((c) =>
+        porCambio.has(c.id) ? { ...c, atrapado: porCambio.get(c.id)! } : c,
+      );
+      pintarCapturas();
+
+      try {
+        const respuesta = await cambiarBuscados(usuario, cambios);
+        estados = respuesta.retos;
+        // La hoja manda: si no contesta con la lista, se deja la de antes en
+        // vez de dar por bueno el cambio pintado.
+        cazados = respuesta.buscados ?? previo;
+        pintar();
+      } catch (error) {
+        cazados = previo;
+        avisar(explicar(error));
+      }
+
+      pintarCapturas();
+    };
+
+    cuadrados.forEach((cuadrado) => {
+      cuadrado.addEventListener('click', () => {
+        const id = cuadrado.dataset.buscado!;
+        const actual = cazados.find((c) => c.id === id);
+        void atrapar([{ id, atrapado: !actual?.atrapado }]);
+      });
+    });
+
     filas.forEach((fila) => {
       fila.addEventListener('click', () => {
         const id = fila.dataset.reto!;
@@ -194,6 +273,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         cerrarSesion();
         usuario = null;
         estados = [];
+        cazados = [];
         mostrar('entrar');
         // Hay que volver a pedir el boton: el anterior ya cumplio su promesa y
         // no volveria a llamar a `entrar`.
@@ -212,8 +292,10 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
           return;
         }
         estados = respuesta.retos;
-        if (quien) quien.textContent = nuevo.nombre;
+        cazados = respuesta.buscados ?? [];
+        if (quien) quien.textContent = `Cuenta maestra · ${nuevo.nombre}`;
         pintar();
+        pintarCapturas();
         mostrar('panel');
       } catch (error) {
         avisar(explicar(error));
@@ -433,9 +515,82 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
   @media (prefers-reduced-motion: reduce) {
     .interruptor,
+    .captura,
     .bola {
       transition: none;
     }
+  }
+
+  /*
+    Los ocho del reto 5, en la misma rejilla que los ve el invitado. Aqui el
+    cuadrado no abre el cartel: lo marca o lo suelta.
+  */
+  .capturas {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .captura {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    padding: 4px;
+    border: 1px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.75);
+    color: var(--dorado-oscuro);
+    font-size: clamp(8px, 2.6vw, 11px);
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    text-align: center;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .captura[aria-pressed='true'] {
+    background: rgba(163, 121, 42, 0.08);
+    color: rgba(138, 100, 35, 0.45);
+  }
+
+  .nombre-captura {
+    position: relative;
+  }
+
+  .sello {
+    display: none;
+  }
+
+  .captura[aria-pressed='true'] .sello {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .sello-caja {
+    padding: 2px 6px;
+    border: 1.5px solid var(--rojo-sello);
+    background: rgba(247, 240, 222, 0.85);
+    color: var(--rojo-sello);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: rotate(-24deg);
+  }
+
+  .pie-capturas {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--texto-suave);
+    text-align: center;
   }
 
   .acciones {

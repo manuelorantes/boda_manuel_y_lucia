@@ -1,9 +1,14 @@
 /**
- * Estado de los retos: que gimnasios estan abiertos y cuales bloqueados.
+ * Estado compartido de los juegos: que gimnasios estan abiertos y que Pokemon
+ * del reto 5 estan ya atrapados.
  *
  * A diferencia de las medallas, que son de cada movil, esto es compartido: lo
- * manda el Apps Script leyendo la pestana `Gimnasios` de la hoja, y solo la
- * cuenta maestra puede cambiarlo. Ver apps-script/Codigo.gs.
+ * manda el Apps Script leyendo las pestanas `Gimnasios` y `Buscados` de la
+ * hoja, y solo la cuenta maestra puede cambiarlo. Ver apps-script/Codigo.gs.
+ *
+ * Los dos viajan en la misma peticion a proposito. El dia de la boda la
+ * pantalla de gimnasios la abren ciento y pico moviles, y pedir los atrapados
+ * aparte seria doblar las llamadas para pintar la misma pantalla.
  *
  * El texto de los ocho retos esta en src/data/pokedex.ts. Si la hoja trae
  * titulo o descripcion propios, mandan sobre los de la web: sirve para
@@ -20,10 +25,21 @@ export interface EstadoReto {
   descripcion?: string;
 }
 
+export interface EstadoBuscado {
+  id: string;
+  atrapado: boolean;
+}
+
 interface Respuesta {
   ok: true;
   admin: boolean;
   retos: EstadoReto[];
+  /**
+   * Opcional a proposito: si la hoja todavia no tiene la pestana `Buscados`,
+   * el Apps Script contesta sin esta clave y la web se comporta como si no
+   * hubiera ninguno atrapado, en vez de romperse.
+   */
+  buscados?: EstadoBuscado[];
 }
 
 /**
@@ -34,24 +50,33 @@ interface Respuesta {
  * de verdad se pide despues y se repinta.
  */
 const CLAVE_RETOS = 'lm-retos';
+const CLAVE_BUSCADOS = 'lm-buscados';
 
-export function retosGuardados(): EstadoReto[] | null {
+function leerGuardado<T>(clave: string): T[] | null {
   try {
-    const crudo = localStorage.getItem(CLAVE_RETOS);
+    const crudo = localStorage.getItem(clave);
     if (!crudo) return null;
     const datos: unknown = JSON.parse(crudo);
-    return Array.isArray(datos) ? (datos as EstadoReto[]) : null;
+    return Array.isArray(datos) ? (datos as T[]) : null;
   } catch {
     return null;
   }
 }
 
-function guardarRetos(retos: EstadoReto[]) {
+function guardar(clave: string, valor: unknown) {
   try {
-    localStorage.setItem(CLAVE_RETOS, JSON.stringify(retos));
+    localStorage.setItem(clave, JSON.stringify(valor));
   } catch {
     // Incognito o almacenamiento lleno: se pedira al servidor cada vez.
   }
+}
+
+export function retosGuardados(): EstadoReto[] | null {
+  return leerGuardado<EstadoReto>(CLAVE_RETOS);
+}
+
+export function buscadosGuardados(): EstadoBuscado[] | null {
+  return leerGuardado<EstadoBuscado>(CLAVE_BUSCADOS);
 }
 
 /**
@@ -63,7 +88,8 @@ function guardarRetos(retos: EstadoReto[]) {
  */
 export async function cargarRetos(idToken?: string): Promise<Respuesta> {
   const respuesta = await llamar<Respuesta>({ accion: 'retos', idToken });
-  guardarRetos(respuesta.retos);
+  guardar(CLAVE_RETOS, respuesta.retos);
+  if (respuesta.buscados) guardar(CLAVE_BUSCADOS, respuesta.buscados);
   return respuesta;
 }
 
@@ -71,6 +97,18 @@ export async function cargarRetos(idToken?: string): Promise<Respuesta> {
 export function cambiarRetos(usuario: Usuario, cambios: { id: string; bloqueado: boolean }[]) {
   return llamar<Respuesta>({
     accion: 'bloquear',
+    idToken: usuario.idToken,
+    cambios,
+  });
+}
+
+/**
+ * Marca o suelta Pokemon del reto 5. Como `cambiarRetos`, el servidor rechaza
+ * a quien no sea la cuenta maestra: el invitado los ve, no los toca.
+ */
+export function cambiarBuscados(usuario: Usuario, cambios: { id: string; atrapado: boolean }[]) {
+  return llamar<Respuesta>({
+    accion: 'atrapar',
     idToken: usuario.idToken,
     cambios,
   });

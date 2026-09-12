@@ -94,6 +94,11 @@ export const HUECOS: Hueco[] = [
  * nombre en vez de romper el build.
  */
 export interface Buscado {
+  /**
+   * Lo que empareja a este Pokemon con su fila de la pestana `Buscados` de la
+   * hoja, igual que el `id` de los gimnasios. No se ensena en pantalla.
+   */
+  id: string;
   nombre: string;
   imagen?: string;
 }
@@ -106,14 +111,14 @@ export interface Buscado {
  * uno por uno, sin tocar el componente.
  */
 export const BUSCADOS: Buscado[] = [
-  { nombre: 'Vaporeon', imagen: 'sudowoodo' },
-  { nombre: 'Jolteon', imagen: 'sudowoodo' },
-  { nombre: 'Flareon', imagen: 'sudowoodo' },
-  { nombre: 'Espeon', imagen: 'sudowoodo' },
-  { nombre: 'Umbreon', imagen: 'sudowoodo' },
-  { nombre: 'Leafeon', imagen: 'sudowoodo' },
-  { nombre: 'Glaceon', imagen: 'sudowoodo' },
-  { nombre: 'Sylveon', imagen: 'sudowoodo' },
+  { id: 'vaporeon', nombre: 'Vaporeon', imagen: 'sudowoodo' },
+  { id: 'jolteon', nombre: 'Jolteon', imagen: 'sudowoodo' },
+  { id: 'flareon', nombre: 'Flareon', imagen: 'sudowoodo' },
+  { id: 'espeon', nombre: 'Espeon', imagen: 'sudowoodo' },
+  { id: 'umbreon', nombre: 'Umbreon', imagen: 'sudowoodo' },
+  { id: 'leafeon', nombre: 'Leafeon', imagen: 'sudowoodo' },
+  { id: 'glaceon', nombre: 'Glaceon', imagen: 'sudowoodo' },
+  { id: 'sylveon', nombre: 'Sylveon', imagen: 'sudowoodo' },
 ];
 
 export interface Gimnasio {

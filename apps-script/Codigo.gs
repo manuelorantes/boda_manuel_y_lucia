@@ -31,6 +31,7 @@ const CLIENT_ID = '464845944511-jfk0lo638e0s794q7upoe13k2pjgijhk.apps.googleuser
 
 const HOJA = 'Capturas';
 const HOJA_GIMNASIOS = 'Gimnasios';
+const HOJA_BUSCADOS = 'Buscados';
 const MAX_BYTES = 700 * 1024; // por foto; llegan recortadas a 480 px
 
 /**
@@ -51,6 +52,24 @@ const GIMNASIOS_INICIALES = [
   ['alakazam', false],
   ['snorlax', true],
   ['porygon', true],
+];
+
+/**
+ * Los ocho Pokemon escondidos del reto 5, solo para `prepararBuscados()`.
+ *
+ * Los identificadores tienen que coincidir con los de `BUSCADOS` en
+ * `src/data/pokedex.ts`. Nacen todos sueltos: el dia de la boda no hay
+ * ninguno atrapado hasta que alguien lo encuentra.
+ */
+const BUSCADOS_INICIALES = [
+  'vaporeon',
+  'jolteon',
+  'flareon',
+  'espeon',
+  'umbreon',
+  'leafeon',
+  'glaceon',
+  'sylveon',
 ];
 
 /** Segundos que se reutiliza la respuesta de `retos` para los invitados. */
@@ -100,6 +119,8 @@ function doPost(e) {
         return json(foto(usuario.sub, peticion.ficheroId));
       case 'bloquear':
         return json(bloquear(usuario, peticion));
+      case 'atrapar':
+        return json(atrapar(usuario, peticion));
       default:
         return json({ ok: false, error: 'accion' });
     }
@@ -146,6 +167,17 @@ function diagnostico() {
       : 'ERROR: no existe ' + HOJA_GIMNASIOS + ' o esta vacia; ejecuta prepararGimnasios()';
   } catch (err) {
     resultado.gimnasios = 'ERROR: ' + String(err);
+  }
+
+  // Sin la pestana Buscados los ocho Pokemon salen sueltos y el panel no
+  // puede marcarlos. La web aguanta sin ella, asi que conviene verlo aqui.
+  try {
+    const sueltos = filasBuscados();
+    resultado.buscados = sueltos.length
+      ? sueltos.length + ' Pokemon (' + sueltos.filter(function (b) { return b.atrapado; }).length + ' atrapados)'
+      : 'ERROR: no existe ' + HOJA_BUSCADOS + ' o esta vacia; ejecuta prepararBuscados()';
+  } catch (err) {
+    resultado.buscados = 'ERROR: ' + String(err);
   }
 
   // El correo no se dice, solo si esta puesto: el diagnostico es publico. Sin
@@ -356,8 +388,29 @@ function retos(usuario) {
     cache.put('retos', lista, CACHE_RETOS);
   }
 
+  // Los atrapados viajan en la misma respuesta: los pinta la misma pantalla
+  // que los retos, asi que pedirlos aparte seria doblar las llamadas. Van en
+  // su propia clave de cache porque los invalida otro boton del panel.
+  let atrapados = cache.get('buscados');
+
+  if (!atrapados && hojaBuscados()) {
+    atrapados = JSON.stringify(
+      filasBuscados().map(function (fila) {
+        return { id: fila.id, atrapado: fila.atrapado };
+      }),
+    );
+    cache.put('buscados', atrapados, CACHE_RETOS);
+  }
+
   // `admin` va fuera de la cache: depende de quien pregunte, la lista no.
-  return { ok: true, admin: esAdmin(usuario), retos: JSON.parse(lista) };
+  const respuesta = { ok: true, admin: esAdmin(usuario), retos: JSON.parse(lista) };
+
+  // Sin la pestana `Buscados` se contesta sin la clave, y la web se comporta
+  // como si no hubiera ninguno atrapado. Asi una hoja a la que todavia no se
+  // le ha pasado `prepararBuscados()` sigue sirviendo los retos.
+  if (atrapados) respuesta.buscados = JSON.parse(atrapados);
+
+  return respuesta;
 }
 
 /**
@@ -401,6 +454,89 @@ function bloquear(usuario, peticion) {
   CacheService.getScriptCache().remove('retos');
 
   return retos(usuario);
+}
+
+/**
+ * Marca o suelta Pokemon del reto 5. Como `bloquear`, acepta varios de golpe
+ * y solo obedece a la cuenta maestra: el invitado los ve, no los toca.
+ */
+function atrapar(usuario, peticion) {
+  if (!esAdmin(usuario)) return { ok: false, error: 'permiso' };
+
+  const cambios = peticion.cambios;
+  if (!cambios || !cambios.length) return { ok: false, error: 'cambios' };
+
+  const hoja = hojaBuscados();
+  if (!hoja) return { ok: false, error: 'hoja' };
+
+  // Mismo candado que en `bloquear`: son pulsaciones seguidas del mismo dedo
+  // sobre ocho filas, y sin el se pisarian entre ellas.
+  const candado = LockService.getScriptLock();
+  candado.waitLock(10000);
+  try {
+    const valores = hoja.getDataRange().getValues();
+    const ahora = new Date();
+
+    cambios.forEach(function (cambio) {
+      for (let i = 1; i < valores.length; i++) {
+        if (String(valores[i][0]).trim() !== String(cambio.id).trim()) continue;
+        hoja.getRange(i + 1, 2).setValue(cambio.atrapado ? true : false);
+        hoja.getRange(i + 1, 3).setValue(ahora);
+        break;
+      }
+    });
+  } finally {
+    candado.releaseLock();
+  }
+
+  CacheService.getScriptCache().remove('buscados');
+
+  return retos(usuario);
+}
+
+/** Las filas de la pestana Buscados, ya interpretadas. */
+function filasBuscados() {
+  const hoja = hojaBuscados();
+  if (!hoja) return [];
+
+  return hoja
+    .getDataRange()
+    .getValues()
+    .slice(1)
+    .filter(function (fila) {
+      return String(fila[0]).trim();
+    })
+    .map(function (fila) {
+      return {
+        id: String(fila[0]).trim(),
+        // Igual que en Gimnasios: vale la casilla marcada o el texto escrito a
+        // mano desde el movil.
+        atrapado: fila[1] === true || /^(true|si|sí|1|x)$/i.test(String(fila[1]).trim()),
+      };
+    });
+}
+
+function hojaBuscados() {
+  return SpreadsheetApp.getActive().getSheetByName(HOJA_BUSCADOS);
+}
+
+/**
+ * Crea la pestana Buscados con los ocho Pokemon del reto 5. Igual que
+ * `prepararGimnasios()`: se ejecuta UNA vez a mano desde el editor y, si la
+ * pestana ya existe, no se toca.
+ */
+function prepararBuscados() {
+  if (hojaBuscados()) return 'La pestana ' + HOJA_BUSCADOS + ' ya existe: no se toca.';
+
+  const hoja = SpreadsheetApp.getActive().insertSheet(HOJA_BUSCADOS);
+  hoja.appendRow(['id', 'atrapado', 'actualizado']);
+  BUSCADOS_INICIALES.forEach(function (id) {
+    hoja.appendRow([id, false, new Date()]);
+  });
+  hoja.setFrozenRows(1);
+  hoja.getRange(2, 2, BUSCADOS_INICIALES.length, 1).insertCheckboxes();
+
+  return 'Pestana ' + HOJA_BUSCADOS + ' creada con ' + BUSCADOS_INICIALES.length + ' Pokemon.';
 }
 
 /** Las filas de la pestana Gimnasios, ya interpretadas. */

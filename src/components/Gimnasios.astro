@@ -111,11 +111,14 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
                   <button
                     class="captura"
                     type="button"
-                    data-buscado={b.nombre}
+                    data-buscado={b.id}
                     aria-haspopup="dialog"
                     aria-label={`Ver el cartel de ${b.nombre}`}
                   >
-                    {b.nombre}
+                    <span class="nombre-captura">{b.nombre}</span>
+                    <span class="sello" aria-hidden="true">
+                      <span class="sello-caja">¡Atrapado!</span>
+                    </span>
                   </button>
                 ))}
               </div>
@@ -149,17 +152,20 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
         class="tarjeta"
         role="dialog"
         aria-modal="true"
-        aria-label={`Se busca: ${b.nombre}`}
-        data-cartel={b.nombre}
+        aria-label={`Cartel de ${b.nombre}`}
+        data-cartel={b.id}
         hidden
       >
         <div class="marco-tarjeta" />
-        <p class="epigrafe se-busca">SE BUSCA</p>
-        {b.dibujo && (
-          <div class="retrato">
+        <p class="epigrafe se-busca" data-epigrafe>SE BUSCA</p>
+        <div class="retrato">
+          {b.dibujo && (
             <Image src={b.dibujo} alt={`Cartel de ${b.nombre}`} width={300} loading="lazy" />
-          </div>
-        )}
+          )}
+          <span class="sello grande" aria-hidden="true">
+            <span class="sello-caja">¡Atrapado!</span>
+          </span>
+        </div>
         <p class="nombre-buscado">{b.nombre}</p>
         <button class="cerrar" type="button" data-cerrar-cartel>
           Cerrar
@@ -615,6 +621,65 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
     background: rgba(138, 100, 35, 0.12);
   }
 
+  /*
+    Atrapado: el cuadrado se apaga y el nombre pierde fuerza, para que los que
+    quedan sueltos sean los que llaman la atencion. Lo pone el servidor, no el
+    movil: la caza es de todos, no de cada uno.
+  */
+  .captura[data-atrapado] {
+    background: rgba(163, 121, 42, 0.08);
+    color: rgba(138, 100, 35, 0.45);
+  }
+
+  .nombre-captura {
+    position: relative;
+  }
+
+  /*
+    El sello son dos piezas: la de fuera se estira sobre el cuadrado o sobre la
+    foto y centra, y la de dentro es la que lleva el marco y el giro. Con una
+    sola, girar descolocaria el centrado.
+  */
+  .sello {
+    display: none;
+  }
+
+  [data-atrapado] .sello {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .sello-caja {
+    padding: 2px 6px;
+    border: 1.5px solid var(--rojo-sello);
+    background: rgba(247, 240, 222, 0.85);
+    color: var(--rojo-sello);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: rotate(-24deg);
+  }
+
+  /* El de la ficha es el mismo sello, en grande y mas torcido. */
+  .sello.grande .sello-caja {
+    padding: 4px 14px;
+    border-width: 3px;
+    background: rgba(247, 240, 222, 0.6);
+    font-size: 28px;
+    letter-spacing: 0.08em;
+    transform: rotate(-32deg);
+  }
+
+  [data-atrapado] .sello.grande {
+    animation: aparecer 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
   /* Mismo modal que la estrofa de "Nuestra historia". */
   .capa {
     position: fixed;
@@ -663,6 +728,16 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
     height: auto;
     object-fit: contain;
     mix-blend-mode: multiply;
+    transition: filter 0.5s;
+  }
+
+  /* Ya cazado: la foto se apaga y el sello cae encima. */
+  .tarjeta[data-atrapado] .retrato :global(img) {
+    filter: grayscale(1) contrast(0.9) opacity(0.8);
+  }
+
+  .tarjeta[data-atrapado] .nombre-buscado {
+    color: var(--texto-suave);
   }
 
   .nombre-buscado {
@@ -744,10 +819,12 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
   @media (prefers-reduced-motion: reduce) {
     .campeon,
     .detalle,
+    [data-atrapado] .sello.grande,
     .reto[data-hecho] .marca {
       animation: none;
     }
 
+    .retrato :global(img),
     .barra-progreso div,
     .medalla,
     .gema,
@@ -797,7 +874,13 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
 
 <script>
   import { CLAVE_MEDALLAS, leerMedallas, guardarMedallas } from '../lib/medallas';
-  import { cargarRetos, retosGuardados, type EstadoReto } from '../lib/retos';
+  import {
+    cargarRetos,
+    retosGuardados,
+    buscadosGuardados,
+    type EstadoReto,
+    type EstadoBuscado,
+  } from '../lib/retos';
 
   const seccion = document.querySelector<HTMLElement>('.gimnasios');
 
@@ -855,6 +938,39 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
       });
 
       pintar();
+    };
+
+    /**
+     * Marca en pantalla los que ya estan atrapados.
+     *
+     * Solo la cuenta maestra los cambia, desde el panel, asi que aqui es de
+     * lectura: el invitado ve caer el sello cuando alguien los encuentra.
+     */
+    const aplicarBuscados = (estados: EstadoBuscado[]) => {
+      const atrapados = new Set(estados.filter((e) => e.atrapado).map((e) => e.id));
+
+      [...document.querySelectorAll<HTMLElement>('[data-buscado]')].forEach((cuadrado) => {
+        const cazado = atrapados.has(cuadrado.dataset.buscado!);
+        if (cazado) cuadrado.dataset.atrapado = '';
+        else delete cuadrado.dataset.atrapado;
+
+        // El sello es decorativo, asi que el estado tiene que ir tambien en el
+        // texto: un lector de pantalla no ve que la ficha este tachada.
+        const nombre = cuadrado.querySelector('.nombre-captura')?.textContent?.trim() ?? '';
+        cuadrado.setAttribute(
+          'aria-label',
+          cazado ? `${nombre}, ya atrapado. Ver su cartel` : `Ver el cartel de ${nombre}`,
+        );
+      });
+
+      document.querySelectorAll<HTMLElement>('[data-cartel]').forEach((cartel) => {
+        const cazado = atrapados.has(cartel.dataset.cartel!);
+        if (cazado) cartel.dataset.atrapado = '';
+        else delete cartel.dataset.atrapado;
+
+        const epigrafe = cartel.querySelector<HTMLElement>('[data-epigrafe]');
+        if (epigrafe) epigrafe.textContent = cazado ? 'CAPTURADO' : 'SE BUSCA';
+      });
     };
 
     const pintar = () => {
@@ -928,8 +1044,16 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
     if (guardados) aplicarRetos(guardados);
     else pintar();
 
+    const cazadosGuardados = buscadosGuardados();
+    if (cazadosGuardados) aplicarBuscados(cazadosGuardados);
+
     cargarRetos()
-      .then((respuesta) => aplicarRetos(respuesta.retos))
+      .then((respuesta) => {
+        aplicarRetos(respuesta.retos);
+        // Sin la pestana `Buscados` en la hoja la clave no viene. Se deja lo
+        // que hubiera en pantalla en vez de soltarlos a todos de golpe.
+        if (respuesta.buscados) aplicarBuscados(respuesta.buscados);
+      })
       .catch(() => {
         // Sin cobertura se queda lo ultimo conocido. No se avisa: el invitado
         // no puede hacer nada al respecto y los retos se leen igual.

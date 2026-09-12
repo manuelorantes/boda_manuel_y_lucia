@@ -69,6 +69,32 @@ toca, para no borrar los textos ya escritos.
 En la web, en `src/data/pokedex.ts`, los ocho. Esta pestaña decide **si un reto
 está abierto**, no qué dice.
 
+## Los Pokémon atrapados del gimnasio 5
+
+El reto 5 esconde ocho Pokémon por la fiesta, y quién está ya cazado es
+**estado compartido** por el mismo motivo que los bloqueos: cuando alguien
+encuentra uno, el sello de "¡Atrapado!" tiene que caer en el móvil de todos.
+Vive en la pestaña `Buscados`.
+
+Sólo la cuenta maestra los marca, desde el panel. El invitado los ve: en su
+pantalla los cuadrados no tienen interruptor, abren el cartel de "se busca".
+
+### Puesta en marcha, una sola vez
+
+Igual que los retos: selecciona `prepararBuscados` en el desplegable de
+funciones y pulsa **Ejecutar**. Crea la pestaña con los ocho, todos sueltos. Si
+ya existe, no la toca.
+
+| Columna | Para qué |
+|---|---|
+| `id` | Empareja la fila con el cuadrado de la web. Tiene que coincidir con `BUSCADOS` en `src/data/pokedex.ts` |
+| `atrapado` | Casilla. Marcada = sello de "¡Atrapado!" y foto en gris |
+| `actualizado` | Lo escribe el panel; es informativo |
+
+Mientras esta pestaña no exista, la web sigue funcionando: los retos se sirven
+igual y los ocho salen sueltos. `?accion=diagnostico` lo dice en la clave
+`buscados`.
+
 Que el texto esté en el repositorio (que es público) significa que un invitado
 con ganas puede leer los dos retos bloqueados mirando el código fuente antes de
 que se abran. Es una decisión tomada a conciencia: a cambio, la pantalla de

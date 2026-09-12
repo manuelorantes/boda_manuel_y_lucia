@@ -82,11 +82,11 @@ src/components/
   Faq.astro                  preguntas frecuentes
   Pie.astro                  ilustración y firma
 src/pages/panel.astro        panel de los novios (abrir y cerrar retos)
-src/data/pokedex.ts          huecos de la Pokédex, gimnasios y preguntas frecuentes
+src/data/pokedex.ts          huecos de la Pokédex, gimnasios, buscados y preguntas frecuentes
 src/lib/googleForm.ts        mapeo y envío al Google Form
 src/lib/appsScript.ts        transporte hacia el Apps Script (fotos y retos)
 src/lib/pokedex.ts           identidad y envío de las capturas
-src/lib/retos.ts             qué gimnasios están abiertos (lo manda el servidor)
+src/lib/retos.ts             qué retos están abiertos y quién está atrapado (lo manda el servidor)
 src/lib/medallas.ts          medallas de los gimnasios en localStorage
 src/lib/contacto.ts          codificación de los teléfonos
 src/assets/                  PNG originales (Astro los optimiza a WebP)
@@ -98,6 +98,12 @@ Las **medallas** son de cada móvil (`localStorage`) y no salen de ahí. El
 **bloqueo** de cada reto, en cambio, es compartido: lo manda el Apps Script
 leyendo la pestaña `Gimnasios` de la hoja, y solo la cuenta maestra lo cambia,
 desde `/panel`.
+
+Los ocho Pokémon escondidos del reto 5 funcionan como el bloqueo, no como las
+medallas: quién está **atrapado** lo manda el servidor desde la pestaña
+`Buscados` y solo la cuenta maestra lo marca. Si fuera de cada móvil, cada
+invitado vería una caza distinta. Viaja en la misma respuesta que los retos
+para no doblar las llamadas.
 
 El texto de los ocho retos está en `src/data/pokedex.ts`, también el de los dos
 que nacen bloqueados. Así la pantalla se lee entera aunque no haya cobertura o

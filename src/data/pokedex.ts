@@ -154,9 +154,8 @@ export const GIMNASIOS: Gimnasio[] = [
     imagen: 'delibird',
     descripcion:
       '«Se rumorea que hay invitados entrenados por Delibird en esta boda. ¿Eres uno de ellos? Si ' +
-      'has traído un detalle navideño escondido entre tu outfit, ¡es hora de revelarlo al Líder ' +
-      'del Gimnasio (u organizador)! Demuestra que tienes espíritu festivo incluso en los momentos ' +
-      'más elegantes.»',
+      'has traído un detalle navideño escondido entre tu outfit, demuestra que tienes espíritu ' +
+      'festivo incluso en los momentos más elegantes.»',
   },
   {
     id: 'sudowoodo',

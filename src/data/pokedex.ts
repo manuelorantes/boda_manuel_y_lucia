@@ -85,6 +85,37 @@ export const HUECOS: Hueco[] = [
  * abren un reto desde el panel y les cambia a los ciento y pico invitados a
  * la vez. Ver src/lib/retos.ts.
  */
+/**
+ * Un Pokemon escondido por la fiesta, de los que hay que encontrar en su reto.
+ *
+ * `imagen` es el cartel de "se busca" que se ensena al tocar su cuadrado, con
+ * las mismas reglas que las ilustraciones de los gimnasios: fichero PNG de
+ * src/assets sin extension, y si todavia no esta, el cartel sale solo con el
+ * nombre en vez de romper el build.
+ */
+export interface Buscado {
+  nombre: string;
+  imagen?: string;
+}
+
+/**
+ * Los ocho hermanos de Eevee, en el orden en que se pintan.
+ *
+ * De momento los ocho llevan el dibujo de Sudowoodo como marcador: cuando
+ * lleguen los carteles de verdad basta con cambiar aqui el nombre del fichero,
+ * uno por uno, sin tocar el componente.
+ */
+export const BUSCADOS: Buscado[] = [
+  { nombre: 'Vaporeon', imagen: 'sudowoodo' },
+  { nombre: 'Jolteon', imagen: 'sudowoodo' },
+  { nombre: 'Flareon', imagen: 'sudowoodo' },
+  { nombre: 'Espeon', imagen: 'sudowoodo' },
+  { nombre: 'Umbreon', imagen: 'sudowoodo' },
+  { nombre: 'Leafeon', imagen: 'sudowoodo' },
+  { nombre: 'Glaceon', imagen: 'sudowoodo' },
+  { nombre: 'Sylveon', imagen: 'sudowoodo' },
+];
+
 export interface Gimnasio {
   id: string;
   gimnasio: string;
@@ -111,6 +142,12 @@ export interface Gimnasio {
    * /panel.
    */
   bloqueadoPorDefecto?: boolean;
+  /**
+   * Los Pokemon que hay que encontrar, si el reto va de buscar. La tarjeta
+   * pinta un cuadrado por cada uno debajo de la descripcion y cada cuadrado
+   * abre su cartel.
+   */
+  buscados?: Buscado[];
 }
 
 export const GIMNASIOS: Gimnasio[] = [
@@ -163,9 +200,10 @@ export const GIMNASIOS: Gimnasio[] = [
     reto: '¡Hazte con Todos (los que están en la sala)!',
     imagen: 'sudowoodo',
     descripcion:
-      '«Varios Pokémon salvajes se han colado en la recepción y se están escondiendo. Son tímidos, ' +
-      'pero un buen entrenador sabe dónde buscar. Encuentra al menos a 3 de ellos por la ' +
-      'habitación para demostrar tu agudeza visual. ¡No olvides reportar tu captura!»',
+      '«Los hermanos mayores de Eevee se han colado en la fiesta y se han escondido. Son tímidos, ' +
+      'pero un buen entrenador sabe dónde buscar. ¡Encuéntralos y captúralos! ¿Quién será el ' +
+      'mejor entrenador? ¡No olvides reportar tu captura!»',
+    buscados: BUSCADOS,
   },
   {
     id: 'alakazam',

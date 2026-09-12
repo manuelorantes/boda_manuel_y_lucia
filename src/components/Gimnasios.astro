@@ -13,6 +13,14 @@ const gimnasios = GIMNASIOS.map((g) => ({
   dibujo: g.imagen ? dibujos[`../assets/${g.imagen}.png`]?.default : undefined,
 }));
 
+// Los carteles de "se busca" se pintan una sola vez, fuera de las tarjetas, y
+// el script ensena el que toque. La lista sale de los propios retos para que
+// anadir buscados a otro gimnasio no obligue a tocar esto.
+const buscados = GIMNASIOS.flatMap((g) => g.buscados ?? []).map((b) => ({
+  ...b,
+  dibujo: b.imagen ? dibujos[`../assets/${b.imagen}.png`]?.default : undefined,
+}));
+
 // Cuantos habra abiertos mientras no conteste el servidor. Los dos ultimos
 // nacen cerrados: si no hay cobertura es mejor quedarse corto que ensenar
 // abierto un reto que los novios aun no han abierto.
@@ -96,6 +104,22 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
                 </div>
               </div>
             </div>
+
+            {g.buscados && (
+              <div class="capturas">
+                {g.buscados.map((b) => (
+                  <button
+                    class="captura"
+                    type="button"
+                    data-buscado={b.nombre}
+                    aria-haspopup="dialog"
+                    aria-label={`Ver el cartel de ${b.nombre}`}
+                  >
+                    {b.nombre}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ))
@@ -118,17 +142,47 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
   </div>
 </section>
 
+<div class="capa" data-buscados hidden>
+  {
+    buscados.map((b) => (
+      <div
+        class="tarjeta"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Se busca: ${b.nombre}`}
+        data-cartel={b.nombre}
+        hidden
+      >
+        <div class="marco-tarjeta" />
+        <p class="epigrafe se-busca">SE BUSCA</p>
+        {b.dibujo && (
+          <div class="retrato">
+            <Image src={b.dibujo} alt={`Cartel de ${b.nombre}`} width={300} loading="lazy" />
+          </div>
+        )}
+        <p class="nombre-buscado">{b.nombre}</p>
+        <button class="cerrar" type="button" data-cerrar-cartel>
+          Cerrar
+        </button>
+      </div>
+    ))
+  }
+</div>
+
 <noscript>
   <!--
     Sin JavaScript no hay desplegable ni medallas que marcar, pero el texto del
-    lider de cada gimnasio se lee igual: es lo que explica el reto.
+    lider de cada gimnasio se lee igual: es lo que explica el reto. Los
+    cuadrados de los buscados si se van: sin script no abren su cartel, y un
+    boton que no responde estorba mas que ayuda.
   -->
   <style>
     .gimnasios .detalle[hidden] {
       display: flex !important;
     }
 
-    .gimnasios .chevron {
+    .gimnasios .chevron,
+    .gimnasios .capturas {
       display: none;
     }
   </style>
@@ -516,6 +570,127 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
     line-height: 1.4;
   }
 
+  /* --- Los ocho buscados y su cartel --- */
+
+  /* Cuatro y cuatro: los ocho caben en dos filas y el cuadrado sale cuadrado. */
+  .capturas {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  /*
+    Con el reto bloqueado los cuadrados desaparecen en vez de quedarse debajo
+    del cartel: no hay nada que buscar todavia, y ademas el cartel de
+    "RETO BLOQUEADO" solo tapa el texto.
+  */
+  .reto[data-bloqueado] .capturas {
+    display: none;
+  }
+
+  .captura {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    padding: 4px;
+    border: 1px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.75);
+    color: var(--dorado-oscuro);
+    /*
+      El nombre mas largo es VAPOREON y tiene que caber en una linea dentro del
+      cuadrado, que mide la cuarta parte del ancho. En un movil estrecho el
+      tipo baja con la pantalla en vez de partir la palabra.
+    */
+    font-size: clamp(8px, 2.6vw, 11px);
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    text-align: center;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .captura:hover {
+    background: rgba(138, 100, 35, 0.12);
+  }
+
+  /* Mismo modal que la estrofa de "Nuestra historia". */
+  .capa {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(74, 52, 22, 0.45);
+  }
+
+  .tarjeta {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    padding: 28px 24px 24px;
+    border: 1.5px solid var(--dorado);
+    background: rgba(247, 240, 222, 0.9);
+    box-shadow: 0 20px 60px rgba(40, 25, 5, 0.35);
+    text-align: center;
+  }
+
+  .marco-tarjeta {
+    position: absolute;
+    inset: 4px;
+    border: 0.5px solid rgba(163, 121, 42, 0.55);
+    pointer-events: none;
+  }
+
+  .se-busca {
+    position: relative;
+    margin: 0;
+  }
+
+  .retrato {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+  }
+
+  .retrato :global(img) {
+    display: block;
+    width: 180px;
+    height: auto;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+  }
+
+  .nombre-buscado {
+    position: relative;
+    margin: 14px 0 0;
+    font-family: var(--script);
+    font-size: 32px;
+    line-height: 1;
+    color: var(--dorado-oscuro);
+  }
+
+  .cerrar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    margin: 20px auto 0;
+    padding: 0 22px;
+    border: 1px solid var(--dorado);
+    background: transparent;
+    color: var(--dorado-oscuro);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
   .campeon {
     position: relative;
     margin: 0 10px;
@@ -578,6 +753,7 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
     .gema,
     .chevron,
     .descripcion,
+    .captura,
     .reto {
       transition: none;
     }
@@ -758,5 +934,53 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
         // Sin cobertura se queda lo ultimo conocido. No se avisa: el invitado
         // no puede hacer nada al respecto y los retos se leen igual.
       });
+  }
+
+  // Los cuadrados de los buscados abren su cartel de "se busca". Mismo patron
+  // que el modal de la estrofa: una sola capa con una tarjeta por Pokemon, y
+  // se ensena la que se ha pedido. La capa vive fuera de la seccion porque se
+  // superpone a la pantalla en vez de navegar.
+  const capa = document.querySelector<HTMLElement>('[data-buscados]');
+
+  if (capa) {
+    const carteles = [...capa.querySelectorAll<HTMLElement>('[data-cartel]')];
+
+    // Se recuerda quien abrio para devolverle el foco al cerrar: si no, salta
+    // al principio de la pantalla y hay que buscar otra vez el cuadrado.
+    let quienAbrio: HTMLElement | null = null;
+
+    const cerrar = () => {
+      capa.hidden = true;
+      carteles.forEach((cartel) => (cartel.hidden = true));
+      quienAbrio?.focus();
+      quienAbrio = null;
+    };
+
+    const abrir = (boton: HTMLButtonElement) => {
+      const cartel = carteles.find((c) => c.dataset.cartel === boton.dataset.buscado);
+      if (!cartel) return;
+
+      carteles.forEach((otro) => (otro.hidden = otro !== cartel));
+      capa.hidden = false;
+      quienAbrio = boton;
+      cartel.querySelector<HTMLButtonElement>('[data-cerrar-cartel]')?.focus();
+    };
+
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-buscado]')
+      .forEach((boton) => boton.addEventListener('click', () => abrir(boton)));
+
+    capa
+      .querySelectorAll<HTMLButtonElement>('[data-cerrar-cartel]')
+      .forEach((boton) => boton.addEventListener('click', cerrar));
+
+    // Pulsar el fondo cierra; pulsar la tarjeta no.
+    capa.addEventListener('click', (evento) => {
+      if (evento.target === capa) cerrar();
+    });
+
+    document.addEventListener('keydown', (evento) => {
+      if (evento.key === 'Escape' && !capa.hidden) cerrar();
+    });
   }
 </script>

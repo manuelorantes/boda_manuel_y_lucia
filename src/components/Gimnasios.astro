@@ -595,6 +595,8 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
   }
 
   .captura {
+    /* El sello se estira sobre este cuadrado, asi que tiene que anclar aqui. */
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;

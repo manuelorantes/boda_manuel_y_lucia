@@ -62,7 +62,8 @@ const MEDALLAS_DE_LA_LIGA = gimnasios.length;
       gimnasios.map((g) => (
         <div class="casilla" data-medallero={g.id}>
           <div class="chapa">
-            {g.chapa && <Image src={g.chapa} alt="" width={112} loading="lazy" />}
+            {/* Sin `width`: miden 97 px y pedir mas solo las estiraria. */}
+            {g.chapa && <Image src={g.chapa} alt="" loading="lazy" />}
           </div>
           <span class="nombre-medalla">{g.medalla.nombre}</span>
         </div>

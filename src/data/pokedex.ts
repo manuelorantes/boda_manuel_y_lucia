@@ -257,8 +257,8 @@ export const GIMNASIOS: Gimnasio[] = [
     imagen: 'porygon',
     bloqueadoPorDefecto: true,
     descripcion:
-      '«Reta a otro invitado a una partida rápida en la zona de juego (billar o mesa recreativa). ' +
-      'No hace falta ganar la partida, solo demostrar deportividad y juego limpio en el tapete.»',
+      '«Reta a otro invitado a una partida rápida en la zona de juego. No hace falta ganar la ' +
+      'partida, solo demostrar deportividad y juego limpio.»',
   },
 ];
 

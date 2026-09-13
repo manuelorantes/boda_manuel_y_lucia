@@ -231,9 +231,8 @@ export const GIMNASIOS: Gimnasio[] = [
     imagen: 'alakazam',
     descripcion:
       '«Un Alakazam ha bloqueado el camino con puzles mentales. Solo los entrenadores con gran ' +
-      'intelecto podrán pasar. Sé el primero en resolver los acertijos que se plantearán. Este ' +
-      'desafío requiere paciencia y una mente fría. ¿Tienes la Inteligencia suficiente para esta ' +
-      'medalla?»',
+      'intelecto podrán pasar. ¡Lleva a tu mesa a la victoria! Este desafío requiere paciencia y ' +
+      'una mente fría. ¿Tienes la inteligencia suficiente para esta medalla?»',
   },
   // Los dos ultimos nacen bloqueados porque se abren avanzada la fiesta, pero
   // por lo demas son retos como los otros seis: su texto vive aqui igual.

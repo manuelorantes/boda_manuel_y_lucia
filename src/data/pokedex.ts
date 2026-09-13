@@ -147,12 +147,26 @@ export interface Gimnasio {
    * abre su cartel.
    */
   buscados?: Buscado[];
+  /**
+   * La medalla que se gana con este reto, para el medallero de la pantalla de
+   * gimnasios. Va aqui, y no en una lista aparte emparejada por posicion, para
+   * que reordenar los retos no descoloque las medallas.
+   */
+  medalla: Medalla;
+}
+
+/** Una de las ocho medallas de la Liga. */
+export interface Medalla {
+  nombre: string;
+  /** Fichero PNG en src/assets, sin extension. Si falta, queda el hueco. */
+  imagen: string;
 }
 
 export const GIMNASIOS: Gimnasio[] = [
   {
     id: 'smeargle',
     gimnasio: 'GIMNASIO 1',
+    medalla: { nombre: 'Roca', imagen: 'badge-rock' },
     reto: 'Poké-Artistas Avanzados',
     imagen: 'smeargle',
     descripcion:
@@ -164,6 +178,7 @@ export const GIMNASIOS: Gimnasio[] = [
   {
     id: 'recuerdo',
     gimnasio: 'GIMNASIO 2',
+    medalla: { nombre: 'Cascada', imagen: 'badge-cascade' },
     reto: 'Pokédex de recuerdo',
     imagen: 'rotom',
     descripcion:
@@ -175,6 +190,7 @@ export const GIMNASIOS: Gimnasio[] = [
   {
     id: 'karaoke',
     gimnasio: 'GIMNASIO 3',
+    medalla: { nombre: 'Trueno', imagen: 'badge-thunder' },
     reto: 'El Canto del Jigglypuff (sin dormirnos)',
     imagen: 'jigglypuff',
     descripcion:
@@ -186,6 +202,7 @@ export const GIMNASIOS: Gimnasio[] = [
   {
     id: 'delibird',
     gimnasio: 'GIMNASIO 4',
+    medalla: { nombre: 'Arcoíris', imagen: 'badge-rainbow' },
     reto: 'El Festival de Invierno de Ciudad Mayólica',
     imagen: 'delibird',
     descripcion:
@@ -196,6 +213,7 @@ export const GIMNASIOS: Gimnasio[] = [
   {
     id: 'sudowoodo',
     gimnasio: 'GIMNASIO 5',
+    medalla: { nombre: 'Alma', imagen: 'badge-soul' },
     reto: '¡Hazte con Todos (los que están en la sala)!',
     imagen: 'sudowoodo',
     descripcion:
@@ -208,6 +226,7 @@ export const GIMNASIOS: Gimnasio[] = [
   {
     id: 'alakazam',
     gimnasio: 'GIMNASIO 6',
+    medalla: { nombre: 'Pantano', imagen: 'badge-marsh' },
     reto: 'El Desafío Intelectual de Ciudad Luminalia',
     imagen: 'alakazam',
     descripcion:
@@ -221,6 +240,7 @@ export const GIMNASIOS: Gimnasio[] = [
   {
     id: 'snorlax',
     gimnasio: 'GIMNASIO 7',
+    medalla: { nombre: 'Volcán', imagen: 'badge-volcano' },
     reto: 'Bayas Mágicas',
     imagen: 'snorlax',
     bloqueadoPorDefecto: true,
@@ -233,6 +253,7 @@ export const GIMNASIOS: Gimnasio[] = [
   {
     id: 'porygon',
     gimnasio: 'GIMNASIO 8',
+    medalla: { nombre: 'Tierra', imagen: 'badge-earth' },
     reto: 'Desafío de la Sala Recreativa',
     imagen: 'porygon',
     bloqueadoPorDefecto: true,

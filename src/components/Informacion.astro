@@ -14,7 +14,10 @@ const MAPA = 'https://maps.app.goo.gl/KQpEZoszp1jsFZWA9';
 // El de las medallas es solo el de partida: cuantos retos hay abiertos lo
 // decide el servidor, y el script lo corrige con lo ultimo que se sepa.
 const HUECOS_TOTALES = HUECOS.length;
-const MEDALLAS_POR_DEFECTO = GIMNASIOS.filter((g) => !g.bloqueadoPorDefecto).length;
+// Las ocho de la Liga. El total no depende de cuantos retos esten abiertos:
+// aqui se pinta el mismo marcador que dentro de la pantalla de gimnasios, y
+// tienen que decir lo mismo.
+const MEDALLAS_DE_LA_LIGA = GIMNASIOS.length;
 
 // Los telefonos no viven en el repositorio: entran en tiempo de build desde
 // variables de entorno (.env en local, secretos de Actions en CI). Ademas se
@@ -107,7 +110,7 @@ const contactos = definidos.map((c) => ({
     <p class="detalle">
       Retos del día. Consigue todas las medallas y conviértete en campeón de la Liga.
     </p>
-    <div class="avance" data-avance="gimnasios" data-total={MEDALLAS_POR_DEFECTO} hidden>
+    <div class="avance" data-avance="gimnasios" data-total={MEDALLAS_DE_LA_LIGA} hidden>
       <div class="cabecera-avance">
         <span data-etiqueta>Medallas</span>
         <span class="cifra" data-cifra></span>
@@ -158,7 +161,6 @@ const contactos = definidos.map((c) => ({
   import { revelar, telefonoParaLeer } from '../lib/contacto';
   import { CLAVE_FOTOS } from '../lib/pokedex';
   import { leerMedallas } from '../lib/medallas';
-  import { retosGuardados } from '../lib/retos';
 
   // Deshace la codificacion del build y monta el enlace real. Se ejecuta en el
   // navegador, asi que el numero nunca aparece en el HTML que se sirve.
@@ -229,18 +231,12 @@ const contactos = definidos.map((c) => ({
       cifra: `${Math.round((hechos / total) * 100)}%`,
     }));
 
-    // Cuantos retos hay abiertos lo manda el servidor. Aqui no se le pregunta:
-    // se usa lo ultimo que guardo la pantalla de gimnasios, y si el invitado
-    // aun no ha entrado ahi, el total de partida del atributo.
-    const estados = retosGuardados();
-    const abiertos = estados?.filter((r) => !r.bloqueado).length;
-
-    pintarAvance(
-      'gimnasios',
-      Object.values(leerMedallas()).filter(Boolean).length,
-      (h, t) => ({ etiqueta: 'Medallas', cifra: `${h} / ${t}` }),
-      abiertos,
-    );
+    // El total sale del atributo y son siempre las ocho, asi que ya no hay que
+    // preguntarle al servidor cuantos retos estan abiertos.
+    pintarAvance('gimnasios', Object.values(leerMedallas()).filter(Boolean).length, (h, t) => ({
+      etiqueta: 'Medallas',
+      cifra: `${h} / ${t}`,
+    }));
   };
 
   refrescar();

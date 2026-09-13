@@ -11,6 +11,9 @@ const dibujos = import.meta.glob<{ default: ImageMetadata }>('../assets/*.png', 
 const gimnasios = GIMNASIOS.map((g) => ({
   ...g,
   dibujo: g.imagen ? dibujos[`../assets/${g.imagen}.png`]?.default : undefined,
+  // Misma regla que las ilustraciones: una medalla cuyo PNG todavia no este en
+  // src/assets deja su hueco con el nombre, en vez de tumbar el build.
+  chapa: dibujos[`../assets/${g.medalla.imagen}.png`]?.default,
 }));
 
 // Los carteles de "se busca" se pintan una sola vez, fuera de las tarjetas, y
@@ -21,10 +24,10 @@ const buscados = GIMNASIOS.flatMap((g) => g.buscados ?? []).map((b) => ({
   dibujo: b.imagen ? dibujos[`../assets/${b.imagen}.png`]?.default : undefined,
 }));
 
-// Cuantos habra abiertos mientras no conteste el servidor. Los dos ultimos
-// nacen cerrados: si no hay cobertura es mejor quedarse corto que ensenar
-// abierto un reto que los novios aun no han abierto.
-const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).length;
+// La Liga son ocho medallas, y el total no se mueve: da igual cuantos retos
+// haya abiertos en ese momento. Un total que subiera y bajara cada vez que los
+// novios abren un reto haria parecer que el avance se pierde.
+const MEDALLAS_DE_LA_LIGA = gimnasios.length;
 ---
 
 <section class="vista gimnasios" data-vista="gimnasios" hidden>
@@ -49,9 +52,22 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
   <div class="progreso">
     <div class="cabecera-progreso">
       <span class="epigrafe">MEDALLAS</span>
-      <span class="cuenta" data-contador>0 / {abiertosPorDefecto}</span>
+      <span class="cuenta" data-contador>0 / {MEDALLAS_DE_LA_LIGA}</span>
     </div>
     <div class="barra-progreso"><div data-barra></div></div>
+  </div>
+
+  <div class="medallero">
+    {
+      gimnasios.map((g) => (
+        <div class="casilla" data-medallero={g.id}>
+          <div class="chapa">
+            {g.chapa && <Image src={g.chapa} alt="" width={112} loading="lazy" />}
+          </div>
+          <span class="nombre-medalla">{g.medalla.nombre}</span>
+        </div>
+      ))
+    }
   </div>
 
   <div class="retos">
@@ -317,6 +333,71 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
     height: 100%;
     background: var(--dorado-oscuro);
     transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  /*
+    El medallero: las ocho de la Liga siempre a la vista, apagadas hasta que se
+    consiguen. Es el marcador de un vistazo, y por eso estan las ocho aunque el
+    reto que da la medalla siga bloqueado.
+  */
+  .medallero {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px 6px;
+    margin: 0 10px;
+    padding: 14px 10px 12px;
+    border: 1px solid var(--dorado);
+    background: rgba(255, 250, 238, 0.55);
+  }
+
+  .casilla {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .chapa {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+  }
+
+  .chapa :global(img) {
+    display: block;
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    /* Sin conseguir: apagada y encogida. Al ganarla, recupera color y crece. */
+    filter: grayscale(1) brightness(0.55);
+    opacity: 0.35;
+    transition:
+      filter 0.5s,
+      opacity 0.5s,
+      transform 0.5s;
+  }
+
+  .casilla[data-hecho] .chapa :global(img) {
+    filter: brightness(0.88) saturate(0.85);
+    opacity: 0.92;
+    transform: scale(1.06);
+  }
+
+  .nombre-medalla {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+    text-align: center;
+    text-transform: uppercase;
+    color: rgba(138, 100, 35, 0.45);
+    transition: color 0.5s;
+  }
+
+  .casilla[data-hecho] .nombre-medalla {
+    color: var(--dorado-oscuro);
   }
 
   .retos {
@@ -891,6 +972,7 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
 
   if (seccion) {
     const retos = [...seccion.querySelectorAll<HTMLElement>('[data-gimnasio]')];
+    const casillas = [...seccion.querySelectorAll<HTMLElement>('[data-medallero]')];
     const contador = seccion.querySelector<HTMLElement>('[data-contador]');
     const barra = seccion.querySelector<HTMLElement>('[data-barra]');
     const campeon = seccion.querySelector<HTMLElement>('[data-campeon]');
@@ -979,10 +1061,11 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
     };
 
     const pintar = () => {
-      const abiertos = retos.filter(abierto);
-      // Una medalla de un reto que se ha vuelto a cerrar no cuenta, pero
-      // tampoco se borra: si los novios lo reabren, sigue ahi.
-      const hechas = abiertos.filter((r) => conseguidas[r.dataset.gimnasio!]).length;
+      // El total son los ocho, esten sus retos abiertos o no. Y una medalla ya
+      // ganada sigue contando aunque los novios vuelvan a cerrar su reto: se
+      // gano, y ver bajar el marcador seria de lo mas injusto.
+      const total = retos.length;
+      const hechas = retos.filter((r) => conseguidas[r.dataset.gimnasio!]).length;
 
       retos.forEach((reto) => {
         const hecha = !!conseguidas[reto.dataset.gimnasio!];
@@ -992,9 +1075,14 @@ const abiertosPorDefecto = gimnasios.filter((g) => !g.bloqueadoPorDefecto).lengt
         reto.querySelector('.medalla')?.setAttribute('aria-pressed', String(hecha));
       });
 
-      if (contador) contador.textContent = `${hechas} / ${abiertos.length}`;
-      if (barra) barra.style.width = `${abiertos.length ? (hechas / abiertos.length) * 100 : 0}%`;
-      if (campeon) campeon.hidden = !abiertos.length || hechas !== abiertos.length;
+      casillas.forEach((casilla) => {
+        if (conseguidas[casilla.dataset.medallero!]) casilla.dataset.hecho = '';
+        else delete casilla.dataset.hecho;
+      });
+
+      if (contador) contador.textContent = `${hechas} / ${total}`;
+      if (barra) barra.style.width = `${total ? (hechas / total) * 100 : 0}%`;
+      if (campeon) campeon.hidden = hechas !== total;
 
       // El bloque LOS GIMNASIOS de la invitacion pinta el mismo numero. Se
       // avisa desde aqui, que es quien sabe cuando cambia y ya ha limpiado lo

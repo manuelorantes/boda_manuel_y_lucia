@@ -211,9 +211,20 @@ export const GIMNASIOS: Gimnasio[] = [
       'festivo incluso en los momentos más elegantes.»',
   },
   {
-    id: 'sudowoodo',
+    id: 'alakazam',
     gimnasio: 'GIMNASIO 5',
     medalla: { nombre: 'Alma', imagen: 'badge-soul' },
+    reto: 'El Desafío Intelectual de Ciudad Luminalia',
+    imagen: 'alakazam',
+    descripcion:
+      '«Un Alakazam ha bloqueado el camino con puzles mentales. Solo los entrenadores con gran ' +
+      'intelecto podrán pasar. ¡Lleva a tu mesa a la victoria! Este desafío requiere paciencia y ' +
+      'una mente fría. ¿Tienes la inteligencia suficiente para esta medalla?»',
+  },
+  {
+    id: 'sudowoodo',
+    gimnasio: 'GIMNASIO 6',
+    medalla: { nombre: 'Pantano', imagen: 'badge-marsh' },
     reto: '¡Hazte con Todos (los que están en la sala)!',
     imagen: 'sudowoodo',
     descripcion:
@@ -222,17 +233,6 @@ export const GIMNASIOS: Gimnasio[] = [
       'mejor entrenador? No olvides reportar tu captura al novio para poder avisar a los demás ' +
       'entrenadores.»',
     buscados: BUSCADOS,
-  },
-  {
-    id: 'alakazam',
-    gimnasio: 'GIMNASIO 6',
-    medalla: { nombre: 'Pantano', imagen: 'badge-marsh' },
-    reto: 'El Desafío Intelectual de Ciudad Luminalia',
-    imagen: 'alakazam',
-    descripcion:
-      '«Un Alakazam ha bloqueado el camino con puzles mentales. Solo los entrenadores con gran ' +
-      'intelecto podrán pasar. ¡Lleva a tu mesa a la victoria! Este desafío requiere paciencia y ' +
-      'una mente fría. ¿Tienes la inteligencia suficiente para esta medalla?»',
   },
   // Los dos ultimos nacen bloqueados porque se abren avanzada la fiesta, pero
   // por lo demas son retos como los otros seis: su texto vive aqui igual.

@@ -99,7 +99,7 @@ Las **medallas** son de cada móvil (`localStorage`) y no salen de ahí. El
 leyendo la pestaña `Gimnasios` de la hoja, y solo la cuenta maestra lo cambia,
 desde `/panel`.
 
-Los ocho Pokémon escondidos del reto 5 funcionan como el bloqueo, no como las
+Los ocho Pokémon escondidos del reto 6 funcionan como el bloqueo, no como las
 medallas: quién está **atrapado** lo manda el servidor desde la pestaña
 `Buscados` y solo la cuenta maestra lo marca. Si fuera de cada móvil, cada
 invitado vería una caza distinta. Viaja en la misma respuesta que los retos

@@ -69,9 +69,9 @@ toca, para no borrar los textos ya escritos.
 En la web, en `src/data/pokedex.ts`, los ocho. Esta pestaña decide **si un reto
 está abierto**, no qué dice.
 
-## Los Pokémon atrapados del gimnasio 5
+## Los Pokémon atrapados del gimnasio 6
 
-El reto 5 esconde ocho Pokémon por la fiesta, y quién está ya cazado es
+El reto 6 esconde ocho Pokémon por la fiesta, y quién está ya cazado es
 **estado compartido** por el mismo motivo que los bloqueos: cuando alguien
 encuentra uno, el sello de "¡Atrapado!" tiene que caer en el móvil de todos.
 Vive en la pestaña `Buscados`.

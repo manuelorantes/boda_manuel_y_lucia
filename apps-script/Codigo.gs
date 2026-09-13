@@ -48,14 +48,14 @@ const GIMNASIOS_INICIALES = [
   ['recuerdo', false],
   ['karaoke', false],
   ['delibird', false],
-  ['sudowoodo', false],
   ['alakazam', false],
+  ['sudowoodo', false],
   ['snorlax', true],
   ['porygon', true],
 ];
 
 /**
- * Los ocho Pokemon escondidos del reto 5, solo para `prepararBuscados()`.
+ * Los ocho Pokemon escondidos del reto 6, solo para `prepararBuscados()`.
  *
  * Los identificadores tienen que coincidir con los de `BUSCADOS` en
  * `src/data/pokedex.ts`. Nacen todos sueltos: el dia de la boda no hay
@@ -457,7 +457,7 @@ function bloquear(usuario, peticion) {
 }
 
 /**
- * Marca o suelta Pokemon del reto 5. Como `bloquear`, acepta varios de golpe
+ * Marca o suelta Pokemon del reto 6. Como `bloquear`, acepta varios de golpe
  * y solo obedece a la cuenta maestra: el invitado los ve, no los toca.
  */
 function atrapar(usuario, peticion) {
@@ -521,7 +521,7 @@ function hojaBuscados() {
 }
 
 /**
- * Crea la pestana Buscados con los ocho Pokemon del reto 5. Igual que
+ * Crea la pestana Buscados con los ocho Pokemon del reto 6. Igual que
  * `prepararGimnasios()`: se ejecuta UNA vez a mano desde el editor y, si la
  * pestana ya existe, no se toca.
  */

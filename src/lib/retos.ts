@@ -1,6 +1,6 @@
 /**
  * Estado compartido de los juegos: que gimnasios estan abiertos y que Pokemon
- * del reto 5 estan ya atrapados.
+ * del reto 6 estan ya atrapados.
  *
  * A diferencia de las medallas, que son de cada movil, esto es compartido: lo
  * manda el Apps Script leyendo las pestanas `Gimnasios` y `Buscados` de la
@@ -103,7 +103,7 @@ export function cambiarRetos(usuario: Usuario, cambios: { id: string; bloqueado:
 }
 
 /**
- * Marca o suelta Pokemon del reto 5. Como `cambiarRetos`, el servidor rechaza
+ * Marca o suelta Pokemon del reto 6. Como `cambiarRetos`, el servidor rechaza
  * a quien no sea la cuenta maestra: el invitado los ve, no los toca.
  */
 export function cambiarBuscados(usuario: Usuario, cambios: { id: string; atrapado: boolean }[]) {

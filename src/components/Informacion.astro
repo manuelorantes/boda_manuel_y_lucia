@@ -49,7 +49,18 @@ const contactos = definidos.map((c) => ({
     <h2>CUÁNDO</h2>
     <p class="dato">Sábado 26 de diciembre de 2026</p>
     <h2 class="segundo">HORARIO</h2>
-    <p class="detalle">17:30 h · Ceremonia</p>
+    <dl class="horario">
+      <dt>17:00 h</dt>
+      <dd>Recepción de invitados</dd>
+      <dt>17:30 h</dt>
+      <dd>Ceremonia</dd>
+      <dt>18:45 h</dt>
+      <dd>Cóctel</dd>
+      <dt>20:30 h</dt>
+      <dd>Cena</dd>
+      <dt>22:30 h</dt>
+      <dd>Barra libre</dd>
+    </dl>
   </div>
 
   <div class="bloque">
@@ -273,6 +284,32 @@ const contactos = definidos.map((c) => ({
   }
 
   .detalle {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.35;
+    color: var(--texto-suave);
+  }
+
+  /*
+    Rejilla de dos columnas en vez de una linea por hora: asi las horas quedan
+    alineadas entre si y el ojo baja por ellas, aunque un nombre largo como
+    "Recepción de invitados" ocupe dos lineas en un movil estrecho.
+  */
+  .horario {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
+    margin: 0;
+  }
+
+  .horario dt {
+    font-size: 17px;
+    line-height: 1.35;
+    color: var(--dorado-oscuro);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .horario dd {
     margin: 0;
     font-size: 17px;
     line-height: 1.35;

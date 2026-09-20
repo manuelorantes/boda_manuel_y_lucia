@@ -13,6 +13,16 @@ const comic = Object.values(modulos)[0]?.default;
 
 /** Identificador del video de la pedida en YouTube (subido como no listado). */
 const VIDEO_PEDIDA = '_tIOM2qpBmw';
+
+/**
+ * El segundo video, el de lo que paso de verdad. Esta grabado con el movil, en
+ * vertical.
+ *
+ * Mientras este vacio, su bloque no se renderiza: se comporta como el comic,
+ * que tampoco rompe la pagina si todavia no esta el fichero. En cuanto haya
+ * identificador, basta con escribirlo aqui.
+ */
+const VIDEO_RESPUESTA: string = '';
 ---
 
 <section class="vista historia" data-vista="historia" hidden>
@@ -76,6 +86,26 @@ const VIDEO_PEDIDA = '_tIOM2qpBmw';
     </noscript>
 
     <a class="boton" href="#" data-ir-a="participantes">¡Conoce a los que participaron!</a>
+
+    <p class="parrafo">
+      Después del vídeo se suponía que Lucía iba a arrodillarse, pero en ese momento...
+    </p>
+
+    {
+      VIDEO_RESPUESTA && (
+        <button
+          class="video vertical"
+          type="button"
+          data-video={VIDEO_RESPUESTA}
+          data-titulo="Lo que pasó después"
+          data-vertical
+          aria-label="Reproducir el vídeo de lo que pasó después"
+        >
+          <span class="play" />
+          <span class="pie-video">LO QUE PASÓ DESPUÉS</span>
+        </button>
+      )
+    }
   </div>
 
   <div class="divisor"><i></i></div>
@@ -259,6 +289,19 @@ const VIDEO_PEDIDA = '_tIOM2qpBmw';
   }
 
   /*
+    El segundo video esta grabado con el movil, en vertical. A 9/16 y todo el
+    ancho del bloque se comeria mas de 600 px de alto, asi que se estrecha y se
+    centra: asi entra de una vez en la pantalla sin tener que hacer scroll para
+    verlo entero.
+  */
+  .video.vertical,
+  :global(.reproductor-pedida.vertical) {
+    aspect-ratio: 9 / 16;
+    width: min(100%, 250px);
+    margin-inline: auto;
+  }
+
+  /*
     El iframe lo crea el script al pulsar, asi que no lleva el atributo de
     ambito que Astro anade en el build: sin :global no le llegaria el estilo.
   */
@@ -438,8 +481,11 @@ const VIDEO_PEDIDA = '_tIOM2qpBmw';
 
       const marco = document.createElement('iframe');
       marco.className = 'reproductor-pedida';
+      // El reproductor hereda la forma de su caratula: si la de fuera era
+      // vertical, el iframe tambien, o el video saldria con franjas negras.
+      if (caratula.dataset.vertical !== undefined) marco.classList.add('vertical');
       marco.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
-      marco.title = 'Vídeo de la pedida';
+      marco.title = caratula.dataset.titulo ?? 'Vídeo de la pedida';
       marco.allow =
         'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
       marco.allowFullscreen = true;

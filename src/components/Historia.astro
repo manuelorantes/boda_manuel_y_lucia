@@ -309,6 +309,14 @@ const VIDEO_PEDIDA = '_tIOM2qpBmw';
     color: var(--dorado-oscuro);
     font-size: 13px;
     letter-spacing: 0.2em;
+    /*
+      El texto largo parte en dos lineas, y ahi justify-content no llega:
+      centra la caja del texto, pero en cuanto esa caja ocupa todo el ancho
+      las lineas se alinean solas a la izquierda. Pasaba con "¡CONOCE A LOS
+      QUE PARTICIPARON!", que con letter-spacing de 0.2em no cabe de una
+      linea en un movil estrecho.
+    */
+    text-align: center;
     text-transform: uppercase;
     cursor: pointer;
   }
@@ -336,6 +344,7 @@ const VIDEO_PEDIDA = '_tIOM2qpBmw';
     color: var(--sobre-dorado);
     font-size: 13px;
     letter-spacing: 0.2em;
+    text-align: center;
     text-transform: uppercase;
   }
 

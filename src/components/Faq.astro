@@ -1,6 +1,14 @@
 ---
-import { PREGUNTAS } from '../data/pokedex';
+import { PREGUNTAS, PREGUNTAS_VIP, type Pregunta } from '../data/pokedex';
+import Estancia from './Estancia.astro';
 import { ofuscar } from '../lib/contacto';
+
+interface Props {
+  /** La entrada VIP anade delante el bloque de preguntas del alojamiento. */
+  variante: 'vip' | 'general';
+}
+
+const { variante } = Astro.props;
 
 const definidos = [
   { nombre: 'Lucía', variable: 'TEL_LUCIA', telefono: import.meta.env.TEL_LUCIA },
@@ -19,6 +27,17 @@ const contactos = definidos.map((c) => ({
   nombre: c.nombre,
   codigo: ofuscar(c.telefono as string),
 }));
+
+// En la entrada general no hay nada que separar: una sola lista sin titulos,
+// como siempre. La VIP abre con lo suyo, que es lo que viene a buscar, y
+// despues las de todos.
+const grupos: { titulo?: string; preguntas: Pregunta[] }[] =
+  variante === 'vip'
+    ? [
+        { titulo: 'Tu entrada VIP', preguntas: PREGUNTAS_VIP },
+        { titulo: 'Para todos los invitados', preguntas: PREGUNTAS },
+      ]
+    : [{ preguntas: PREGUNTAS }];
 ---
 
 <section class="vista faq" data-vista="faq" hidden>
@@ -37,16 +56,28 @@ const contactos = definidos.map((c) => ({
 
   <div class="lista">
     {
-      PREGUNTAS.map((p, i) => (
-        <div class="pregunta">
-          <button class="cabecera" type="button" aria-expanded="false" aria-controls={`faq-${i}`}>
-            <span>{p.q}</span>
-            <span class="chevron" />
-          </button>
+      grupos.map((grupo, g) => (
+        <div class="grupo">
+          {grupo.titulo && <h3 class="titulo-grupo">{grupo.titulo}</h3>}
 
-          <div class="respuesta" id={`faq-${i}`} hidden>
-            <p class="texto">{p.a}</p>
-          </div>
+          {grupo.preguntas.map((p, i) => (
+            <div class="pregunta">
+              <button
+                class="cabecera"
+                type="button"
+                aria-expanded="false"
+                aria-controls={`faq-${g}-${i}`}
+              >
+                <span>{p.q}</span>
+                <span class="chevron" />
+              </button>
+
+              <div class="respuesta" id={`faq-${g}-${i}`} hidden>
+                <p class="texto">{p.a}</p>
+                {p.estancia && <Estancia />}
+              </div>
+            </div>
+          ))}
         </div>
       ))
     }
@@ -75,8 +106,8 @@ const contactos = definidos.map((c) => ({
 
 <noscript>
   <!--
-    Sin JavaScript el acordeon no se abre nunca, asi que las diez respuestas
-    quedan a la vista de salida: se pierde el plegado, no el contenido.
+    Sin JavaScript el acordeon no se abre nunca, asi que las respuestas quedan
+    todas a la vista de salida: se pierde el plegado, no el contenido.
   -->
   <style>
     .faq .respuesta[hidden] {
@@ -105,8 +136,9 @@ const contactos = definidos.map((c) => ({
       cabecera.addEventListener('click', () => {
         const abierta = cabecera.getAttribute('aria-expanded') === 'true';
 
-        // Una sola abierta a la vez, como en el diseno: son diez preguntas y
-        // con varias desplegadas se pierde el sitio.
+        // Una sola abierta a la vez, como en el diseno: son once preguntas
+        // contando la VIP, y con varias desplegadas se pierde el sitio. El
+        // cierre barre los dos grupos, no solo el de la pregunta pulsada.
         preguntas.forEach((otra) => {
           otra.querySelector('.cabecera')?.setAttribute('aria-expanded', 'false');
           const suya = otra.querySelector<HTMLElement>('.respuesta');
@@ -212,6 +244,25 @@ const contactos = definidos.map((c) => ({
     display: flex;
     flex-direction: column;
     padding: 0 10px;
+  }
+
+  .grupo {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Solo hay segundo grupo en la VIP; en la general esto nunca aplica. */
+  .grupo + .grupo {
+    margin-top: 26px;
+  }
+
+  .titulo-grupo {
+    margin: 0 0 4px;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--dorado-oscuro);
   }
 
   .pregunta {

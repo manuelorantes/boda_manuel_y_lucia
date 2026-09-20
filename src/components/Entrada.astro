@@ -13,7 +13,10 @@ import Faq from './Faq.astro';
 interface Props {
   /** Texto del titulo script de la portada. */
   titulo: string;
-  /** Decide los pasos de la confirmacion: la VIP pregunta por alojamiento. */
+  /**
+   * Decide los pasos de la confirmacion y el bloque propio de la FAQ: la VIP
+   * pregunta por alojamiento y explica la habitacion.
+   */
   variante: 'general' | 'vip';
 }
 
@@ -40,7 +43,7 @@ const { titulo, variante } = Astro.props;
 <Pokedex />
 <Gimnasios />
 <Album />
-<Faq />
+<Faq variante={variante} />
 
 <noscript>
   <!--

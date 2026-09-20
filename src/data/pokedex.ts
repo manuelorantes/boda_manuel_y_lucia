@@ -266,6 +266,8 @@ export const GIMNASIOS: Gimnasio[] = [
 export interface Pregunta {
   q: string;
   a: string;
+  /** Cuelga la ficha de la habitacion debajo del texto. Solo en las VIP. */
+  estancia?: boolean;
 }
 
 export const PREGUNTAS: Pregunta[] = [
@@ -316,5 +318,24 @@ export const PREGUNTAS: Pregunta[] = [
     a:
       'En el álbum compartido, desde el apartado "Vuestras fotos". Guarda el QR: ahí publicaremos ' +
       'nuestra selección después.',
+  },
+];
+
+/**
+ * Preguntas que solo ve la entrada VIP.
+ *
+ * Van en su propia lista y no marcadas dentro de PREGUNTAS porque la pagina
+ * general no debe contener ninguna referencia al alojamiento, ni siquiera
+ * oculta: asi el HTML de `/` no las incluye por construccion, igual que pasa
+ * con el paso de alojamiento del formulario.
+ */
+export const PREGUNTAS_VIP: Pregunta[] = [
+  {
+    q: '¿Cómo funciona mi habitación?',
+    a:
+      'Tu entrada VIP incluye la noche del 26 en el Señorío de Nevada, en el mismo sitio de la ' +
+      'celebración: no hay que conducir de vuelta. Confirma el alojamiento en el formulario para ' +
+      'que te reservemos la habitación.',
+    estancia: true,
   },
 ];

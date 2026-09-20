@@ -666,7 +666,18 @@ const MEDALLAS_DE_LA_LIGA = gimnasios.length;
   /* Cuatro y cuatro: los ocho caben en dos filas y el cuadrado sale cuadrado. */
   .capturas {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    /*
+      minmax(0, 1fr) y no 1fr a secas: `1fr` es minmax(auto, 1fr), y ese `auto`
+      impide que la columna baje del ancho minimo de su nombre. Si el movil
+      agranda el tipo por su cuenta (tamano minimo de letra del navegador,
+      ajuste de accesibilidad), VAPOREON deja de caber en un cuarto del ancho,
+      las columnas crecen, la rejilla se sale del cuadro y `main` se la come
+      por la derecha con su overflow: hidden. El resultado es justo lo que se
+      ve: la ultima columna pegada al borde y la primera con su margen intacto.
+      Con el minimo en 0 las columnas siempre miden lo mismo y la rejilla no
+      puede descentrarse.
+    */
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -685,6 +696,9 @@ const MEDALLAS_DE_LA_LIGA = gimnasios.length;
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Lo mismo que en las columnas, pero para la casilla: sin esto el cuadrado
+       tampoco baja del ancho de su nombre y vuelve a desbordar. */
+    min-width: 0;
     aspect-ratio: 1;
     padding: 4px;
     border: 1px solid var(--dorado);

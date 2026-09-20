@@ -154,10 +154,58 @@ Google Form durante los primeros días.
 
 ## Despliegue
 
-Cada push a `main` dispara `.github/workflows/deploy.yml`, que compila y publica
-en GitHub Pages.
+Hay dos entornos, y los dos viven en el mismo GitHub Pages:
 
-Configuración necesaria una sola vez: Settings → Pages → Source: **GitHub Actions**.
+| Entorno | Rama | URL |
+|---|---|---|
+| Producción | `main` | https://manuelorantes.github.io/boda_manuel_y_lucia/ |
+| Staging | `staging` | https://manuelorantes.github.io/boda_manuel_y_lucia/staging/ |
+
+**El trabajo del día a día se hace en `staging`.** `main` solo se toca al
+publicar una release.
+
+```bash
+git switch staging
+# ...cambios...
+git push                      # se publica en /staging/ en un par de minutos
+
+# cuando la versión de staging está aprobada, la release:
+git switch main
+git merge --ff-only staging
+git push
+```
+
+Que el merge sea `--ff-only` es lo que hace que producción sea exactamente lo
+que se probó en staging: si no avanza en línea recta es que `main` tiene algo
+que staging no tiene, y conviene mirarlo antes de publicar.
+
+### Por qué un solo workflow
+
+GitHub Pages publica **un solo sitio por repositorio** y cada despliegue
+reemplaza el anterior entero, así que dos workflows independientes se borrarían
+el uno al otro. En vez de eso, `.github/workflows/deploy.yml` se dispara con
+cualquier push a `main` o a `staging`, compila **las dos ramas** (cada una con
+su `BASE_PATH`, ver `astro.config.mjs`) y sube un único artefacto con
+producción en la raíz y staging en `staging/`.
+
+Efectos que conviene tener presentes:
+
+- Un push a `staging` también reconstruye producción desde `main`. Como el
+  código de `main` no ha cambiado, el resultado es el mismo: producción no se
+  mueve.
+- Si el build de staging falla, **no se despliega nada** y producción se queda
+  en la versión anterior.
+- Staging es una URL pública como cualquier otra. No lo protege nada más que
+  no estar enlazada (igual que `/vip`; ver el aviso de arriba). Todo el sitio
+  va con `noindex, nofollow` desde `Layout.astro`, así que no aparece en
+  buscadores.
+
+Configuración necesaria una sola vez:
+
+- Settings → Pages → Source: **GitHub Actions**.
+- Settings → Environments → `github-pages` → Deployment branches: tienen que
+  estar **`main` y `staging`**. Si falta `staging`, sus despliegues se rechazan
+  y el job muere pidiendo aprobación.
 
 ### Dominio propio
 

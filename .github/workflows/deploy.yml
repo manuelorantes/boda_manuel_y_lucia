@@ -1,9 +1,19 @@
 name: Deploy to GitHub Pages
 
+# GitHub Pages publica UN solo sitio por repositorio: cada despliegue reemplaza
+# el anterior entero. Por eso no hay dos workflows independientes, sino uno que
+# compila las dos ramas y las junta en un mismo artefacto:
+#
+#   main     -> /boda_manuel_y_lucia/          (produccion)
+#   staging  -> /boda_manuel_y_lucia/staging/  (pruebas)
+#
+# Consecuencia querida: da igual a que rama se empuje, siempre se republican
+# las dos. Un push a staging reconstruye produccion desde main, asi que el
+# contenido de produccion no cambia; y si el build de staging falla, no se
+# despliega nada y en produccion se queda en pie la version anterior.
 on:
-  # Cada push a main republica la web
   push:
-    branches: [main]
+    branches: [main, staging]
   # ...y permite lanzarlo a mano desde la pestana Actions
   workflow_dispatch:
 
@@ -18,6 +28,10 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  BASE_PROD: /boda_manuel_y_lucia
+  BASE_STAGING: /boda_manuel_y_lucia/staging
+
 jobs:
   build:
     name: Build
@@ -27,23 +41,70 @@ jobs:
     # vacios y el build aborta al renderizar CONTACTO o la FAQ.
     environment: github-pages
     steps:
-      - name: Checkout
+      - name: Checkout produccion (main)
         uses: actions/checkout@v4
+        with:
+          ref: main
+          path: prod
+
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          path: staging
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            prod/package-lock.json
+            staging/package-lock.json
 
       # Los telefonos no estan en el repositorio: se escriben aqui desde los
       # secretos para que Astro los lea igual que el .env local. El fichero
       # solo existe dentro del runner, que se destruye al terminar el job.
       - name: Write .env from secrets
         run: |
-          {
-            echo "TEL_LUCIA=${{ secrets.TEL_LUCIA }}"
-            echo "TEL_MANUEL=${{ secrets.TEL_MANUEL }}"
-          } > .env
+          for dir in prod staging; do
+            {
+              echo "TEL_LUCIA=${{ secrets.TEL_LUCIA }}"
+              echo "TEL_MANUEL=${{ secrets.TEL_MANUEL }}"
+            } > "$dir/.env"
+          done
 
-      - name: Install, build and upload site
-        uses: withastro/action@v3
+      - name: Build produccion
+        working-directory: prod
+        env:
+          BASE_PATH: ${{ env.BASE_PROD }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build staging
+        working-directory: staging
+        env:
+          BASE_PATH: ${{ env.BASE_STAGING }}
+        run: |
+          npm ci
+          npm run build
+
+      # Produccion en la raiz y staging colgando de /staging/. El orden importa:
+      # primero la raiz, y staging despues, para que nada de main pise la
+      # carpeta staging si algun dia existiera un fichero con ese nombre.
+      - name: Juntar las dos webs
+        run: |
+          mkdir -p site
+          cp -r prod/dist/. site/
+          rm -rf site/staging
+          mkdir -p site/staging
+          cp -r staging/dist/. site/staging/
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          node-version: 22
+          path: site
 
   deploy:
     name: Deploy

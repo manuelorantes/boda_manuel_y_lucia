@@ -290,6 +290,13 @@ export const PREGUNTAS: Pregunta[] = [
       'todo los navideños. No se admite el blanco.',
   },
   {
+    q: '¿Habrá zapatillas para cambiarse los tacones?',
+    a:
+      'No las ponemos nosotros. Si vas a llevar zapatos poco cómodos, te animamos a traer las ' +
+      'tuyas de casa para aguantar toda la noche y el baile. El coche estará cerca y es el mejor ' +
+      'sitio para dejarlas, así no cargas con ellas durante toda la boda.',
+  },
+  {
     q: '¿Hay parking?',
     a: 'Sí, el Señorío de Nevada incluye parking para todos los invitados.',
   },
